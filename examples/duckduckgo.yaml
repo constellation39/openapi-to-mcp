@@ -1,0 +1,23 @@
+openapi: 3.1.0
+info:
+  title: DuckDuckGo Search API
+  description: Search the web using DuckDuckGo's API. Use this tool to find information about topics, people, places, and more.
+  version: 1.0.0
+servers:
+  - url: https://api.duckduckgo.com
+    description: DuckDuckGo API endpoint
+
+paths:
+  /:
+    get:
+      summary: Search for information on the web
+      description: Performs a web search and returns relevant results, summaries, and related topics
+      operationId: duckduckgoSearch
+      parameters:
+        - name: q
+          in: query
+          description: The search query. Be specific and concise for better results. For example, "climate change effects" or "renewable energy technologies".
+          required: true
+          schema:
+            type: string
+            example: "climate change effects"

@@ -1,0 +1,1069 @@
+openapi: 3.0.0
+info:
+  title: firecrawl
+  version: v1
+  description: |
+    API for interacting with firecrawl-simple services to perform web scraping and crawling tasks.
+    
+    This API allows you to:
+    - Scrape individual web pages and extract content in various formats
+    - Crawl multiple pages starting from a base URL
+    - Map website structures to discover available pages
+    - Extract structured data using LLMs
+  contact:
+    name: Devflow, Inc. Devs
+    url: https://trieve.ai
+    email: humans@trieve.ai
+servers:
+  - url: https://api.firecrawl.dev/v1
+paths:
+  /scrape:
+    post:
+      summary: Scrape a single URL and optionally extract information using an LLM
+      operationId: scrapeAndExtractFromUrl
+      tags:
+        - Scraping
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: The URL to scrape
+                  example: "https://example.com/blog/article"
+                formats:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - markdown
+                      - html
+                      - rawHtml
+                      - links
+                      - screenshot
+                      - extract
+                      - screenshot@fullPage
+                      - json
+                  description: Formats to include in the output.
+                  default: ["markdown"]
+                  example: ["markdown", "links", "screenshot"]
+                onlyMainContent:
+                  type: boolean
+                  description: Only return the main content of the page excluding headers, navs, footers, etc.
+                  default: true
+                includeTags:
+                  type: array
+                  items:
+                    type: string
+                  description: Tags to include in the output.
+                  example: ["article", "main", "p"]
+                excludeTags:
+                  type: array
+                  items:
+                    type: string
+                  description: Tags to exclude from the output.
+                  example: ["nav", "footer", "aside"]
+                headers:
+                  type: object
+                  description: Headers to send with the request. Can be used to send cookies, user-agent, etc.
+                  example:
+                    User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                    Cookie: "session=abc123"
+                waitFor:
+                  type: integer
+                  description: Specify a delay in milliseconds before fetching the content, allowing the page sufficient time to load.
+                  default: 0
+                  example: 2000
+                mobile:
+                  type: boolean
+                  description: Set to true to use a mobile user agent and viewport.
+                  default: false
+                skipTlsVerification:
+                  type: boolean
+                  description: Skip TLS verification for the request.
+                  default: false
+                timeout:
+                  type: integer
+                  description: Timeout in milliseconds for the request
+                  default: 30000
+                  example: 45000
+                jsonOptions:
+                  type: object
+                  description: Options for JSON extraction
+                  properties:
+                    schema:
+                      type: object
+                      description: The schema to use for the extraction (Optional)
+                      example:
+                        title: "string"
+                        author: "string"
+                        publishDate: "string"
+                        content: "string"
+                    systemPrompt:
+                      type: string
+                      description: The system prompt to use for the extraction (Optional)
+                      example: "You are an expert at extracting structured data from web pages."
+                    prompt:
+                      type: string
+                      description: The prompt to use for the extraction without a schema (Optional)
+                      example: "Extract the main article content, author name, and publication date from this webpage."
+                actions:
+                  type: array
+                  description: Actions to perform on the page before scraping
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: ["wait", "click", "screenshot", "scrape", "executeJavascript"]
+                      milliseconds:
+                        type: integer
+                        description: Milliseconds to wait (for wait action)
+                      selector:
+                        type: string
+                        description: CSS selector for elements to interact with
+                location:
+                  type: object
+                  description: Location settings for the request
+                  properties:
+                    country:
+                      type: string
+                      description: Country code for geolocation
+                      example: "US"
+                    languages:
+                      type: array
+                      items:
+                        type: string
+                      description: Language preferences
+                      example: ["en-US"]
+                removeBase64Images:
+                  type: boolean
+                  description: Remove base64 encoded images from the output
+                  default: true
+                blockAds:
+                  type: boolean
+                  description: Block ads during page load
+                  default: true
+                proxy:
+                  type: string
+                  description: Proxy type to use
+                  enum: ["basic", "residential"]
+                  example: "basic"
+              required:
+                - url
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScrapeResponse"
+        "402":
+          description: Payment required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Payment required to access this resource.
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Request rate limit exceeded. Please wait and try again later.
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: An unexpected error occurred on the server.
+  /batch-scrape:
+    post:
+      summary: Scrape multiple URLs in a batch
+      operationId: batchScrape
+      tags:
+        - Scraping
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                urls:
+                  type: array
+                  items:
+                    type: string
+                  description: List of URLs to scrape
+                  example: ["https://example.com/page1", "https://example.com/page2"]
+                options:
+                  type: object
+                  description: Scrape options to apply to all URLs
+                  properties:
+                    formats:
+                      type: array
+                      items:
+                        type: string
+                        enum: ["markdown", "html", "rawHtml", "links", "screenshot"]
+                      default: ["markdown"]
+                    onlyMainContent:
+                      type: boolean
+                      default: true
+                    waitFor:
+                      type: integer
+                      default: 0
+                    timeout:
+                      type: integer
+                      default: 30000
+              required:
+                - urls
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  id:
+                    type: string
+                    example: "batch-123456"
+                  statusUrl:
+                    type: string
+                    format: uri
+                    example: "https://api.firecrawl.dev/v1/batch-scrape/batch-123456"
+  /batch-scrape/{id}:
+    get:
+      summary: Get the status of a batch scrape job
+      operationId: getBatchScrapeStatus
+      tags:
+        - Scraping
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Batch scrape job ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  status:
+                    type: string
+                    enum: ["pending", "processing", "completed", "failed"]
+                    example: "completed"
+                  total:
+                    type: integer
+                    example: 10
+                  completed:
+                    type: integer
+                    example: 10
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        url:
+                          type: string
+                          example: "https://example.com/page1"
+                        data:
+                          $ref: "#/components/schemas/ScrapeResponse/properties/data"
+  /crawl/{id}:
+    parameters:
+      - name: id
+        in: path
+        description: The ID of the crawl job
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get the status of a crawl job
+      operationId: getCrawlStatus
+      tags:
+        - Crawling
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrawlStatusResponseObj"
+        "402":
+          description: Payment required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Payment required to access this resource.
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Request rate limit exceeded. Please wait and try again later.
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: An unexpected error occurred on the server.
+    delete:
+      summary: Cancel a crawl job
+      operationId: cancelCrawl
+      tags:
+        - Crawling
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successful cancellation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Crawl job successfully cancelled.
+        "404":
+          description: Crawl job not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Crawl job not found.
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: An unexpected error occurred on the server.
+  /crawl/errors/{id}:
+    get:
+      summary: Get errors from a crawl job
+      operationId: getCrawlErrors
+      tags:
+        - Crawling
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Crawl job ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        url:
+                          type: string
+                          example: "https://example.com/broken-page"
+                        error:
+                          type: string
+                          example: "Timeout waiting for page to load"
+                        statusCode:
+                          type: integer
+                          example: 404
+  /crawl:
+    post:
+      summary: Crawl multiple URLs based on options
+      operationId: crawlUrls
+      tags:
+        - Crawling
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: The base URL to start crawling from
+                  example: "https://example.com"
+                excludePaths:
+                  type: array
+                  items:
+                    type: string
+                  description: URL patterns to exclude
+                  example: ["/admin/*", "/login", "/private/*"]
+                includePaths:
+                  type: array
+                  items:
+                    type: string
+                  description: URL patterns to include
+                  example: ["/blog/*", "/products/*"]
+                maxDepth:
+                  type: integer
+                  description: Maximum depth to crawl relative to the entered URL.
+                  default: 2
+                  example: 3
+                ignoreSitemap:
+                  type: boolean
+                  description: Ignore the website sitemap when crawling
+                  default: true
+                  example: false
+                limit:
+                  type: integer
+                  description: Maximum number of pages to crawl
+                  default: 10
+                  example: 50
+                allowBackwardLinks:
+                  type: boolean
+                  description: Enables the crawler to navigate from a specific URL to previously linked pages.
+                  default: false
+                  example: true
+                allowExternalLinks:
+                  type: boolean
+                  description: Allows the crawler to follow links to external websites.
+                  default: false
+                  example: false
+                webhookMetadata:
+                  type: object
+                  description: Metadata to send with the webhook
+                  example:
+                    projectId: "project-123"
+                    source: "marketing-campaign"
+                scrapeOptions:
+                  type: object
+                  properties:
+                    formats:
+                      type: array
+                      items:
+                        type: string
+                        enum: ["markdown", "rawHtml", "screenshot"]
+                      description: Formats to include in the output.
+                      default: ["markdown", "rawHtml"]
+                      example: ["markdown", "screenshot"]
+                    headers:
+                      type: object
+                      description: Headers to send with the request. Can be used to send cookies, user-agent, etc.
+                      example:
+                        User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                    includeTags:
+                      type: array
+                      items:
+                        type: string
+                      description: Tags to include in the output.
+                      example: ["article", "section"]
+                    excludeTags:
+                      type: array
+                      items:
+                        type: string
+                      description: Tags to exclude from the output.
+                      example: ["nav", "footer"]
+                    waitFor:
+                      type: integer
+                      description: Wait x amount of milliseconds for the page to load to fetch content
+                      default: 123
+                      example: 2000
+              required:
+                - url
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CrawlResponse"
+        "402":
+          description: Payment required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Payment required to access this resource.
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Request rate limit exceeded. Please wait and try again later.
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: An unexpected error occurred on the server.
+  /map:
+    post:
+      summary: Map multiple URLs based on options
+      operationId: mapUrls
+      tags:
+        - Mapping
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: The base URL to start crawling from
+                  example: "https://example.com"
+                search:
+                  type: string
+                  description: Search query to use for mapping. During the Alpha phase, the 'smart' part of the search functionality is limited to 100 search results. However, if map finds more results, there is no limit applied.
+                  example: "product review"
+                ignoreSitemap:
+                  type: boolean
+                  description: Ignore the website sitemap when crawling
+                  default: true
+                  example: false
+                includeSubdomains:
+                  type: boolean
+                  description: Include subdomains of the website
+                  default: false
+                  example: true
+                limit:
+                  type: integer
+                  description: Maximum number of links to return
+                  default: 5000
+                  maximum: 5000
+                  example: 1000
+              required:
+                - url
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MapResponse"
+        "402":
+          description: Payment required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Payment required to access this resource.
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Request rate limit exceeded. Please wait and try again later.
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: An unexpected error occurred on the server.
+  /extract:
+    post:
+      summary: Extract structured data from a URL using LLMs
+      operationId: extractData
+      tags:
+        - Extraction
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: The URL to extract data from
+                  example: "https://example.com/blog/article"
+                schema:
+                  type: object
+                  description: The schema to use for extraction
+                  example:
+                    title: "string"
+                    author: "string"
+                    publishDate: "string"
+                    content: "string"
+                systemPrompt:
+                  type: string
+                  description: Custom system prompt for the LLM
+                  example: "You are an expert at extracting structured data from web pages."
+                prompt:
+                  type: string
+                  description: Custom user prompt for the LLM
+                  example: "Extract the main article content, author name, and publication date from this webpage."
+              required:
+                - url
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  id:
+                    type: string
+                    example: "extract-123456"
+                  statusUrl:
+                    type: string
+                    format: uri
+                    example: "https://api.firecrawl.dev/v1/extract/extract-123456"
+  /extract/{id}:
+    get:
+      summary: Get the status of an extraction job
+      operationId: getExtractStatus
+      tags:
+        - Extraction
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Extraction job ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  status:
+                    type: string
+                    enum: ["pending", "processing", "completed", "failed"]
+                    example: "completed"
+                  data:
+                    type: object
+                    description: Extracted data following the provided schema
+                    example:
+                      title: "How to Use Web Scraping Effectively"
+                      author: "Jane Smith"
+                      publishDate: "2023-05-15"
+                      content: "Web scraping is a powerful technique for data collection..."
+  /search:
+    post:
+      summary: Search for content across crawled websites
+      operationId: searchContent
+      tags:
+        - Search
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: Search query
+                  example: "web scraping techniques"
+                domains:
+                  type: array
+                  items:
+                    type: string
+                  description: Limit search to specific domains
+                  example: ["example.com", "blog.example.com"]
+                limit:
+                  type: integer
+                  description: Maximum number of results to return
+                  default: 10
+                  maximum: 100
+              required:
+                - query
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        url:
+                          type: string
+                          example: "https://example.com/blog/web-scraping"
+                        title:
+                          type: string
+                          example: "Advanced Web Scraping Techniques"
+                        snippet:
+                          type: string
+                          example: "...learn about the most effective web scraping techniques for data collection..."
+                        score:
+                          type: number
+                          format: float
+                          example: 0.89
+  /credit-usage:
+    get:
+      summary: Get credit usage information
+      operationId: getCreditUsage
+      tags:
+        - Account
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  credits:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        example: 10000
+                      used:
+                        type: integer
+                        example: 2500
+                      remaining:
+                        type: integer
+                        example: 7500
+                  usage:
+                    type: object
+                    properties:
+                      scrape:
+                        type: integer
+                        example: 1200
+                      crawl:
+                        type: integer
+                        example: 800
+                      extract:
+                        type: integer
+                        example: 500
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    ScrapeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            markdown:
+              type: string
+              example: "# Article Title\n\nThis is the content of the article...\n\n## Section 1\n\nMore content here..."
+            html:
+              type: string
+              nullable: true
+              description: HTML version of the content on page if `html` is in `formats`
+              example: "<h1>Article Title</h1><p>This is the content of the article...</p><h2>Section 1</h2><p>More content here...</p>"
+            rawHtml:
+              type: string
+              nullable: true
+              description: Raw HTML content of the page if `rawHtml` is in `formats`
+              example: "<!DOCTYPE html><html><head><title>Article Title</title></head><body>...</body></html>"
+            screenshot:
+              type: string
+              nullable: true
+              description: Screenshot of the page if `screenshot` is in `formats`
+              example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+            links:
+              type: array
+              items:
+                type: string
+              description: List of links on the page if `links` is in `formats`
+              example:
+                - "https://example.com/blog/related-article-1"
+                - "https://example.com/blog/related-article-2"
+            actions:
+              type: object
+              nullable: true
+              description: Results of actions performed on the page
+              properties:
+                screenshots:
+                  type: array
+                  items:
+                    type: string
+                  description: Screenshots taken during actions
+                scrapes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      url:
+                        type: string
+                      html:
+                        type: string
+                javascriptReturns:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      value:
+                        type: object
+            metadata:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "Article Title - Example Blog"
+                description:
+                  type: string
+                  example: "This is a sample article about an interesting topic."
+                language:
+                  type: string
+                  nullable: true
+                  example: "en"
+                sourceURL:
+                  type: string
+                  format: uri
+                  example: "https://example.com/blog/article"
+                "<any other metadata> ":
+                  type: string
+                statusCode:
+                  type: integer
+                  description: The status code of the page
+                  example: 200
+                error:
+                  type: string
+                  nullable: true
+                  description: The error message of the page
+                  example: null
+            llm_extraction:
+              type: object
+              description: Displayed when using LLM Extraction. Extracted data from the page following the schema defined.
+              nullable: true
+              example:
+                title: "How to Use Web Scraping Effectively"
+                author: "Jane Smith"
+                publishDate: "2023-05-15"
+                content: "Web scraping is a powerful technique for data collection..."
+            warning:
+              type: string
+              nullable: true
+              description: Can be displayed when using LLM Extraction. Warning message will let you know any issues with the extraction.
+              example: "Could not extract publication date with high confidence."
+    CrawlStatusResponseObj:
+      type: object
+      properties:
+        status:
+          type: string
+          description: The current status of the crawl. Can be `scraping`, `completed`, or `failed`.
+          example: "completed"
+        total:
+          type: integer
+          description: The total number of pages that were attempted to be crawled.
+          example: 25
+        completed:
+          type: integer
+          description: The number of pages that have been successfully crawled.
+          example: 23
+        expiresAt:
+          type: string
+          format: date-time
+          description: The date and time when the crawl will expire.
+          example: "2023-12-31T23:59:59Z"
+        next:
+          type: string
+          nullable: true
+          description: The URL to retrieve the next 10MB of data. Returned if the crawl is not completed or if the response is larger than 10MB.
+          example: "https://api.firecrawl.dev/v1/crawl/123456?page=2"
+        data:
+          type: array
+          description: The data of the crawl.
+          items:
+            type: object
+            properties:
+              markdown:
+                type: string
+                example: "# Welcome to Example.com\n\nThis is our homepage content..."
+              rawHtml:
+                type: string
+                nullable: true
+                description: Raw HTML content of the page if `includeRawHtml`  is true
+                example: "<!DOCTYPE html><html><head><title>Example.com</title></head><body>...</body></html>"
+              links:
+                type: array
+                items:
+                  type: string
+                description: List of links on the page if `includeLinks` is true
+                example:
+                  - "https://example.com/about"
+                  - "https://example.com/products"
+              screenshot:
+                type: string
+                nullable: true
+                description: Screenshot of the page if `includeScreenshot` is true
+                example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+              metadata:
+                type: object
+                properties:
+                  title:
+                    type: string
+                    example: "Example.com - Home"
+                  description:
+                    type: string
+                    example: "Welcome to Example.com, your source for examples."
+                  language:
+                    type: string
+                    nullable: true
+                    example: "en"
+                  sourceURL:
+                    type: string
+                    format: uri
+                    example: "https://example.com"
+                  "<any other metadata> ":
+                    type: string
+                  statusCode:
+                    type: integer
+                    description: The status code of the page
+                    example: 200
+                  error:
+                    type: string
+                    nullable: true
+                    description: The error message of the page
+                    example: null
+    CrawlResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        id:
+          type: string
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        url:
+          type: string
+          format: uri
+          example: "https://api.firecrawl.dev/v1/crawl/550e8400-e29b-41d4-a716-446655440000"
+    MapResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        links:
+          type: array
+          items:
+            type: string
+          example:
+            - "https://example.com/products/item1"
+            - "https://example.com/products/item2"
+            - "https://example.com/blog/product-review"
+            - "https://example.com/about/team"
+security:
+  - bearerAuth: []

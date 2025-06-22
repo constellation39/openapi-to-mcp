@@ -1,0 +1,70 @@
+openapi: 3.1.0
+info:
+  title: Logo.dev API
+  description: |
+    Logo.dev API provides company logos for websites and applications.
+    This API allows you to fetch logos by domain name with various customization options.
+  version: 1.0.0
+servers:
+  - url: https://img.logo.dev
+    description: Logo.dev API endpoint
+
+paths:
+  /{domain}:
+    get:
+      summary: Get Company Logo
+      description: Retrieve a company logo by its domain name
+      operationId: getCompanyLogo
+      parameters:
+        - name: domain
+          in: path
+          description: Domain name of the company (e.g., microsoft.com)
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: query
+          description: Your API key for authentication
+          required: false
+          schema:
+            type: string
+        - name: size
+          in: query
+          description: Size of the logo in pixels
+          required: false
+          schema:
+            type: integer
+            default: 100
+        - name: format
+          in: query
+          description: File format of the returned logo
+          required: false
+          schema:
+            type: string
+            enum: [png, jpg, svg]
+            default: png
+      responses:
+        '200':
+          description: Logo image returned successfully
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Bad request or invalid parameters
+        '401':
+          description: Unauthorized - API key is missing or invalid
+        '404':
+          description: Logo not found for the specified domain
+        '429':
+          description: Rate limit exceeded
+

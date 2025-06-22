@@ -1,0 +1,727 @@
+openapi: 3.1.0
+info:
+  title: Home Assistant REST API
+  version: "1.0.0"
+  description: |
+    This specification documents the Home Assistant REST API endpoints.
+    All endpoints require a Bearer token for authorization.
+    
+    The API allows you to control devices, fetch states, trigger automations, and more.
+servers:
+  - url: http://{host}:{port}
+    description: Home Assistant server
+    variables:
+      host:
+        default: localhost
+      port:
+        default: "8123"
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: TOKEN
+  parameters:
+    timestamp:
+      name: timestamp
+      in: path
+      required: true
+      description: Timestamp in ISO 8601 format (e.g., 2023-01-15T14:30:00Z).
+      schema:
+        type: string
+        format: date-time
+    entity_id:
+      name: entity_id
+      in: path
+      required: true
+      description: Unique identifier for an entity (e.g., light.living_room, switch.kitchen).
+      schema:
+        type: string
+    camera_entity_id:
+      name: camera_entity_id
+      in: path
+      required: true
+      description: Camera entity identifier (e.g., camera.front_door, camera.backyard).
+      schema:
+        type: string
+    calendar_entity_id:
+      name: calendar_entity_id
+      in: path
+      required: true
+      description: Calendar entity identifier (e.g., calendar.holidays, calendar.work_schedule).
+      schema:
+        type: string
+    domain:
+      name: domain
+      in: path
+      required: true
+      description: Domain of the service (e.g., light, switch, automation, script).
+      schema:
+        type: string
+    service:
+      name: service
+      in: path
+      required: true
+      description: Service to be called (e.g., turn_on, turn_off, toggle, set_temperature).
+      schema:
+        type: string
+    event_type:
+      name: event_type
+      in: path
+      required: true
+      description: Type of the event to post (e.g., call_service, automation_triggered, homeassistant_start).
+      schema:
+        type: string
+  schemas:
+    GenericObject:
+      type: object
+      additionalProperties: true
+    APIMessage:
+      type: object
+      properties:
+        message:
+          type: string
+      examples:
+        - summary: API running message
+          value:
+            message: "API running."
+    Config:
+      type: object
+      properties:
+        components:
+          type: array
+          items:
+            type: string
+        config_dir:
+          type: string
+        elevation:
+          type: number
+        latitude:
+          type: number
+        location_name:
+          type: string
+        longitude:
+          type: number
+        time_zone:
+          type: string
+        unit_system:
+          type: object
+          properties:
+            length:
+              type: string
+            mass:
+              type: string
+            temperature:
+              type: string
+            volume:
+              type: string
+        version:
+          type: string
+        whitelist_external_dirs:
+          type: array
+          items:
+            type: string
+      examples:
+        - summary: Home Assistant configuration example
+          value:
+            components:
+              - light.hue
+              - switch.tuya
+              - sensor.weather
+              - frontend
+              - config.core
+              - http
+              - map
+              - api
+              - sun
+              - config
+              - discovery
+              - conversation
+              - recorder
+              - group
+              - sensor
+              - websocket_api
+              - automation
+              - config.automation
+              - config.customize
+            config_dir: "/home/homeassistant/.homeassistant"
+            elevation: 510
+            latitude: 45.8781529
+            location_name: "Smart Home"
+            longitude: 8.458853651
+            time_zone: "Europe/Zurich"
+            unit_system:
+              length: "km"
+              mass: "g"
+              temperature: "°C"
+              volume: "L"
+            version: "2023.6.0"
+            whitelist_external_dirs:
+              - "/home/homeassistant/.homeassistant/www"
+              - "/home/homeassistant/.homeassistant/"
+    Event:
+      type: object
+      properties:
+        event:
+          type: string
+        listener_count:
+          type: integer
+      examples:
+        - summary: Home Assistant event example
+          value:
+            event: "state_changed"
+            listener_count: 5
+    Service:
+      type: object
+      properties:
+        domain:
+          type: string
+        services:
+          type: array
+          items:
+            type: string
+      examples:
+        - summary: Home Assistant service example
+          value:
+            domain: "light"
+            services:
+              - "turn_on"
+              - "turn_off"
+              - "toggle"
+              - "set_color"
+    State:
+      type: object
+      properties:
+        entity_id:
+          type: string
+        state:
+          type: string
+        attributes:
+          type: object
+          additionalProperties: true
+        last_changed:
+          type: string
+          format: date-time
+        last_updated:
+          type: string
+          format: date-time
+      examples:
+        - summary: Light entity state example
+          value:
+            entity_id: "light.living_room"
+            state: "on"
+            attributes: {
+              "brightness": 255,
+              "color_temp": 300,
+              "friendly_name": "Living Room Light",
+              "supported_features": 63
+            }
+            last_changed: "2023-05-30T21:43:32.418320+00:00"
+            last_updated: "2023-05-30T21:43:32.418320+00:00"
+    ErrorLog:
+      type: string
+      examples:
+        - summary: Home Assistant error log example
+          value: |
+            2023-05-20 11:02:50 homeassistant.components.recorder: Found unfinished sessions
+            2023-05-20 11:03:03 netdisco.ssdp: Error fetching description at http://192.168.1.1:8200/rootDesc.xml
+            2023-05-20 11:04:36 homeassistant.components.alexa: Received unknown intent HelpIntent
+    Calendar:
+      type: object
+      properties:
+        entity_id:
+          type: string
+        name:
+          type: string
+      examples:
+        - summary: Home Assistant calendar example
+          value:
+            entity_id: "calendar.family_birthdays"
+            name: "Family Birthdays"
+    CalendarEvent:
+      type: object
+      properties:
+        summary:
+          type: string
+        start:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date
+            dateTime:
+              type: string
+              format: date-time
+        end:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date
+            dateTime:
+              type: string
+              format: date-time
+        description:
+          type: string
+        location:
+          type: string
+      examples:
+        - summary: All-day event example
+          value:
+            summary: "Family Vacation"
+            start:
+              date: "2023-07-15"
+            end:
+              date: "2023-07-22"
+        - summary: Timed event example
+          value:
+            summary: "Smart Home Maintenance"
+            start:
+              dateTime: "2023-06-06T10:00:00-07:00"
+            end:
+              dateTime: "2023-06-06T11:30:00-07:00"
+            description: "Replace air filters and check sensors"
+            location: "Living Room"
+    TemplateRequest:
+      type: object
+      properties:
+        template:
+          type: string
+      examples:
+        - summary: Home Assistant template request
+          value:
+            template: "The living room light is {{ states('light.living_room') }} with brightness {{ state_attr('light.living_room', 'brightness') }}."
+    TemplateResponse:
+      type: string
+      examples:
+        - summary: Home Assistant template response
+          value: "The living room light is on with brightness 255."
+    CheckConfigResponse:
+      type: object
+      properties:
+        errors:
+          oneOf:
+            - type: string
+            - type: "null"
+        result:
+          type: string
+      examples:
+        - summary: Valid Home Assistant configuration
+          value:
+            errors: null
+            result: "valid"
+        - summary: Invalid Home Assistant configuration
+          value:
+            errors: "Integration not found: zwave_js: not found in integrations folder"
+            result: "invalid"
+    IntentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+      examples:
+        - summary: Home Assistant intent request example
+          value:
+            name: "HassTurnOn"
+            data:
+              entity_id: "light.kitchen"
+    IntentResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      examples:
+        - summary: Home Assistant intent response example
+          value:
+            message: "Turned on kitchen light."
+  responses:
+    SuccessResponse:
+      description: Successful response.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/GenericObject"
+    CreatedResponse:
+      description: Resource created.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/GenericObject"
+    NotFound:
+      description: Not Found.
+    Unauthorized:
+      description: Unauthorized.
+paths:
+  /api/:
+    get:
+      summary: Get API root.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: API running message.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIMessage"
+  /api/config:
+    get:
+      summary: Get Home Assistant configuration details.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Configuration details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Config"
+  /api/events:
+    get:
+      summary: Retrieve available Home Assistant events.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Array of event objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+  /api/services:
+    get:
+      summary: Retrieve available Home Assistant services.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Array of service objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Service"
+  /api/history/period/{timestamp}:
+    get:
+      summary: Retrieve entity state history for a specified period.
+      parameters:
+        - $ref: "#/components/parameters/timestamp"
+        - name: filter_entity_id
+          in: query
+          required: true
+          description: Comma separated list of entity IDs to filter (e.g., light.living_room,switch.kitchen).
+          schema:
+            type: string
+        - name: end_time
+          in: query
+          required: false
+          description: End timestamp in ISO 8601 format.
+          schema:
+            type: string
+            format: date-time
+        - name: minimal_response
+          in: query
+          required: false
+          description: Return minimal response.
+          schema:
+            type: boolean
+        - name: no_attributes
+          in: query
+          required: false
+          description: Skip returning attributes.
+          schema:
+            type: boolean
+        - name: significant_changes_only
+          in: query
+          required: false
+          description: Only return significant state changes.
+          schema:
+            type: boolean
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: History data.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/State"
+  /api/logbook/{timestamp}:
+    get:
+      summary: Retrieve Home Assistant logbook entries.
+      parameters:
+        - $ref: "#/components/parameters/timestamp"
+        - name: entity
+          in: query
+          required: false
+          description: Filter by entity (e.g., light.living_room).
+          schema:
+            type: string
+        - name: end_time
+          in: query
+          required: false
+          description: End time in ISO 8601 format.
+          schema:
+            type: string
+            format: date-time
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logbook entries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GenericObject"
+  /api/states:
+    get:
+      summary: Retrieve all entity states.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Array of state objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/State"
+  /api/states/{entity_id}:
+    get:
+      summary: Retrieve state of a specific entity.
+      parameters:
+        - $ref: "#/components/parameters/entity_id"
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: State object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/State"
+        '404':
+          $ref: "#/components/responses/NotFound"
+    post:
+      summary: Update or create state of a specific entity.
+      parameters:
+        - $ref: "#/components/parameters/entity_id"
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: JSON payload containing the new state data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/State"
+      responses:
+        '200':
+          description: State updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/State"
+        '201':
+          description: New state created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/State"
+  /api/error_log:
+    get:
+      summary: Retrieve Home Assistant error logs as plain text.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Error log text.
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - summary: Example error log
+                    value: |
+                      2023-05-20 11:02:50 homeassistant.components.recorder: Found unfinished sessions
+                      2023-05-20 11:03:03 netdisco.ssdp: Error fetching description at http://192.168.1.1:8200/rootDesc.xml
+                      2023-05-20 11:04:36 homeassistant.components.alexa: Received unknown intent HelpIntent
+  /api/camera_proxy/{camera_entity_id}:
+    get:
+      summary: Retrieve a camera proxy image.
+      parameters:
+        - $ref: "#/components/parameters/camera_entity_id"
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Binary image data.
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+  /api/calendars:
+    get:
+      summary: Retrieve Home Assistant calendar entities.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Array of calendar objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Calendar"
+  /api/calendars/{calendar_entity_id}:
+    get:
+      summary: Retrieve calendar events for a specific calendar.
+      parameters:
+        - $ref: "#/components/parameters/calendar_entity_id"
+        - name: start
+          in: query
+          required: true
+          description: Start time (inclusive) in ISO 8601 format.
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          required: true
+          description: End time (exclusive) in ISO 8601 format.
+          schema:
+            type: string
+            format: date-time
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Array of calendar events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CalendarEvent"
+  /api/events/{event_type}:
+    post:
+      summary: Fire a Home Assistant event.
+      parameters:
+        - $ref: "#/components/parameters/event_type"
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Optional event data.
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenericObject"
+      responses:
+        '200':
+          description: Event fired successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIMessage"
+  /api/services/{domain}/{service}:
+    post:
+      summary: Call a Home Assistant service.
+      parameters:
+        - $ref: "#/components/parameters/domain"
+        - $ref: "#/components/parameters/service"
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Optional service call parameters.
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenericObject"
+      responses:
+        '200':
+          description: Service called successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/State"
+  /api/template:
+    post:
+      summary: Render a Home Assistant template.
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: JSON payload with the template data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TemplateRequest"
+      responses:
+        '200':
+          description: Template rendered successfully.
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - summary: Rendered template output
+                    value: "The living room light is on with brightness 255."
+  /api/config/core/check_config:
+    post:
+      summary: Check Home Assistant core configuration.
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Optional JSON payload for configuration check.
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenericObject"
+      responses:
+        '200':
+          description: Configuration check result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckConfigResponse"
+  /api/intent/handle:
+    post:
+      summary: Handle a Home Assistant intent.
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: JSON payload with intent data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntentRequest"
+      responses:
+        '200':
+          description: Intent handled successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntentResponse"

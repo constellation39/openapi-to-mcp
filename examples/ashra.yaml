@@ -1,0 +1,46 @@
+openapi: 3.0.0
+info:
+  title: Ashra AI API
+  description: API for interacting with Ashra AI services
+  version: 1.0.0
+servers:
+  - url: https://api.ashra.ai
+    description: Ashra AI API server
+paths:
+  /prompt:
+    post:
+      summary: Send a prompt to Ashra AI
+      description: Sends a prompt to the Ashra AI service and returns the response
+      operationId: sendPrompt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  description: URL parameter for the prompt
+                prompt:
+                  type: string
+                  description: The prompt text to send to the AI
+              required:
+                - url
+                - prompt
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: API key for authentication with Ashra AI

@@ -1,0 +1,181 @@
+openapi: 3.1.0
+info:
+  title: FAL.AI Text to Image API
+  version: "1.0.0"
+  description: |
+    API for FLUX.1 [schnell], a 12 billion parameter flow transformer that generates high-quality images from text.
+servers:
+  - url: https://queue.fal.run
+    description: FAL.AI API server
+security:
+  - apiKeyAuth: []
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API_KEY
+  schemas:
+    ImageSize:
+      type: object
+      properties:
+        width:
+          type: integer
+          description: The width of the generated image.
+          default: 512
+        height:
+          type: integer
+          description: The height of the generated image.
+          default: 512
+    Image:
+      type: object
+      required:
+        - url
+        - width
+        - height
+      properties:
+        url:
+          type: string
+          description: URL of the generated image
+        width:
+          type: integer
+          description: Width of the generated image
+        height:
+          type: integer
+          description: Height of the generated image
+        content_type:
+          type: string
+          description: Content type of the image
+          default: "image/jpeg"
+    Timings:
+      type: object
+      description: Timing information for the generation process
+    TextToImageRequest:
+      type: object
+      required:
+        - prompt
+      properties:
+        prompt:
+          type: string
+          description: The prompt to generate an image from
+        image_size:
+          oneOf:
+            - type: string
+              enum: [square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9]
+            - $ref: "#/components/schemas/ImageSize"
+          description: The size of the generated image
+          default: landscape_4_3
+        num_inference_steps:
+          type: integer
+          description: The number of inference steps to perform
+          default: 4
+        seed:
+          type: integer
+          description: Seed for reproducible image generation
+        num_images:
+          type: integer
+          description: The number of images to generate
+          default: 1
+        enable_safety_checker:
+          type: boolean
+          description: If true, the safety checker will be enabled
+          default: true
+    TextToImageResponse:
+      type: object
+      required:
+        - images
+        - timings
+        - seed
+        - has_nsfw_concepts
+        - prompt
+      properties:
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/Image"
+          description: The generated image files info
+        timings:
+          $ref: "#/components/schemas/Timings"
+          description: Timing information for the generation process
+        seed:
+          type: integer
+          description: Seed used for image generation
+        has_nsfw_concepts:
+          type: array
+          items:
+            type: boolean
+          description: Whether the generated images contain NSFW concepts
+        prompt:
+          type: string
+          description: The prompt used for generating the image
+    RequestStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+          description: Current status of the request
+        request_id:
+          type: string
+          description: Unique identifier for the request
+paths:
+  /fal-ai/flux/schnell:
+    post:
+      summary: Generate images from text prompts
+      description: Submit a request to generate images based on text prompts using FLUX.1 [schnell] model
+      operationId: generateImage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TextToImageRequest"
+      responses:
+        '200':
+          description: Request submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    description: Unique identifier for the request
+  /fal-ai/flux/requests/{request_id}/status:
+    get:
+      summary: Get request status
+      description: Check the status of a previously submitted request
+      operationId: getRequestStatus
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          description: Unique identifier for the request
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestStatus"
+  /fal-ai/flux/requests/{request_id}:
+    get:
+      summary: Get request result
+      description: Retrieve the result of a completed request
+      operationId: getRequestResult
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          description: Unique identifier for the request
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request result retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TextToImageResponse"

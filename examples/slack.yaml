@@ -1,0 +1,511 @@
+openapi: 3.0.0
+info:
+  title: Slack Web API
+  description: An interface for querying information from and enacting change in a Slack workspace.
+  version: 1.0.0
+servers:
+  - url: https://slack.com/api
+security:
+  - bearerAuth: []
+paths:
+  /chat.postMessage:
+    post:
+      summary: Send a message to a channel
+      description: Posts a message to a public channel, private channel, or direct message/IM channel.
+      operationId: chatPostMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - channel
+                - text
+              properties:
+                channel:
+                  type: string
+                  description: Channel, private group, or IM channel to send message to.
+                text:
+                  type: string
+                  description: Text of the message to send.
+                attachments:
+                  type: array
+                  description: A JSON-based array of structured attachments.
+                  items:
+                    type: object
+                blocks:
+                  type: array
+                  description: A JSON-based array of structured blocks.
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  channel:
+                    type: string
+                  ts:
+                    type: string
+                  message:
+                    type: object
+  /conversations.list:
+    get:
+      summary: List conversations
+      description: Lists all channels in a Slack team.
+      operationId: conversationsList
+      parameters:
+        - name: cursor
+          in: query
+          description: Pagination cursor for next page
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: integer
+        - name: types
+          in: query
+          description: Types of conversations to include (public_channel, private_channel, mpim, im), prefer use public_channel,private_channel,im,mpim
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  channels:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conversation'
+                  response_metadata:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+  /conversations.history:
+    get:
+      summary: Fetch conversation history
+      description: Fetches a conversation's history of messages and events.
+      operationId: conversationsHistory
+      parameters:
+        - name: channel
+          in: query
+          required: true
+          description: Conversation ID
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          description: Pagination cursor
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Number of messages to return
+          schema:
+            type: integer
+        - name: latest
+          in: query
+          description: End of time range
+          schema:
+            type: string
+        - name: oldest
+          in: query
+          description: Start of time range
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                  has_more:
+                    type: boolean
+                  response_metadata:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+  /search.messages:
+    get:
+      summary: Search messages
+      description: Searches for messages matching a query.
+      operationId: searchMessages
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Search query
+          schema:
+            type: string
+        - name: count
+          in: query
+          description: Number of results to return per page
+          schema:
+            type: integer
+        - name: cursor
+          in: query
+          description: Pagination cursor
+          schema:
+            type: string
+        - name: highlight
+          in: query
+          description: Whether to highlight the matches
+          schema:
+            type: boolean
+        - name: sort
+          in: query
+          description: Sort direction (score or timestamp)
+          schema:
+            type: string
+            enum: [score, timestamp]
+        - name: sort_dir
+          in: query
+          description: Sort direction (asc or desc)
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  query:
+                    type: string
+                  messages:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      pagination:
+                        type: object
+                        properties:
+                          total_count:
+                            type: integer
+                          page:
+                            type: integer
+                          per_page:
+                            type: integer
+                          page_count:
+                            type: integer
+                          first:
+                            type: integer
+                          last:
+                            type: integer
+                      paging:
+                        type: object
+                        properties:
+                          count:
+                            type: integer
+                          total:
+                            type: integer
+                          page:
+                            type: integer
+                          pages:
+                            type: integer
+                      matches:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            channel:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+                            user:
+                              type: string
+                            username:
+                              type: string
+                            ts:
+                              type: string
+                            text:
+                              type: string
+                            permalink:
+                              type: string
+  /users.list:
+    get:
+      summary: List users
+      description: Lists all users in a Slack workspace.
+      operationId: usersList
+      parameters:
+        - name: cursor
+          in: query
+          description: Pagination cursor for next page
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: integer
+        - name: include_locale
+          in: query
+          description: Set to true to receive the locale for users
+          schema:
+            type: boolean
+        - name: team_id
+          in: query
+          description: Team ID to list users for (required for org-wide apps)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  members:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  response_metadata:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+  /users.info:
+    get:
+      summary: Get user information
+      description: Gets information about a specific user.
+      operationId: usersInfo
+      parameters:
+        - name: user
+          in: query
+          required: true
+          description: User ID to get info on
+          schema:
+            type: string
+        - name: include_locale
+          in: query
+          description: Set to true to receive the locale for this user
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/User'
+  /users.profile.get:
+    get:
+      summary: Get user profile
+      description: Retrieve a user's profile information, including their custom status.
+      operationId: usersProfileGet
+      parameters:
+        - name: user
+          in: query
+          description: User to retrieve profile info for
+          schema:
+            type: string
+        - name: include_labels
+          in: query
+          description: Include labels for each ID in custom profile fields
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  profile:
+                    type: object
+                    properties:
+                      avatar_hash:
+                        type: string
+                      status_text:
+                        type: string
+                      status_emoji:
+                        type: string
+                      status_expiration:
+                        type: integer
+                      real_name:
+                        type: string
+                      display_name:
+                        type: string
+                      real_name_normalized:
+                        type: string
+                      display_name_normalized:
+                        type: string
+                      email:
+                        type: string
+                      image_original:
+                        type: string
+                      image_24:
+                        type: string
+                      image_32:
+                        type: string
+                      image_48:
+                        type: string
+                      image_72:
+                        type: string
+                      image_192:
+                        type: string
+                      image_512:
+                        type: string
+                      team:
+                        type: string
+components:
+  schemas:
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Channel ID
+        name:
+          type: string
+          description: Name of the channel
+        is_channel:
+          type: boolean
+          description: Indicates whether this is a channel
+        is_group:
+          type: boolean
+          description: Indicates whether this is a private channel
+        is_im:
+          type: boolean
+          description: Indicates whether this is a direct message
+        created:
+          type: integer
+          description: Timestamp when the conversation was created
+        creator:
+          type: string
+          description: User ID of the member that created this conversation
+        is_archived:
+          type: boolean
+          description: Indicates whether this conversation is archived
+        is_general:
+          type: boolean
+          description: Indicates whether this is the general channel
+        members:
+          type: array
+          description: List of user IDs that are members of this conversation
+          items:
+            type: string
+        topic:
+          type: object
+          properties:
+            value:
+              type: string
+            creator:
+              type: string
+            last_set:
+              type: integer
+        purpose:
+          type: object
+          properties:
+            value:
+              type: string
+            creator:
+              type: string
+            last_set:
+              type: integer
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: User ID
+        team_id:
+          type: string
+          description: Team ID the user belongs to
+        name:
+          type: string
+          description: User's username
+        deleted:
+          type: boolean
+          description: Whether the user has been deactivated
+        color:
+          type: string
+          description: User's color theme
+        real_name:
+          type: string
+          description: User's real name
+        tz:
+          type: string
+          description: User's timezone
+        tz_label:
+          type: string
+          description: User's timezone label
+        tz_offset:
+          type: integer
+          description: User's timezone offset
+        profile:
+          type: object
+          description: User's profile information
+        is_admin:
+          type: boolean
+          description: Whether the user is an admin
+        is_owner:
+          type: boolean
+          description: Whether the user is an owner
+        is_primary_owner:
+          type: boolean
+          description: Whether the user is the primary owner
+        is_restricted:
+          type: boolean
+          description: Whether the user is a restricted user
+        is_ultra_restricted:
+          type: boolean
+          description: Whether the user is an ultra restricted user
+        is_bot:
+          type: boolean
+          description: Whether the user is a bot
+        is_app_user:
+          type: boolean
+          description: Whether the user is an app user
+        updated:
+          type: integer
+          description: Timestamp when the user was last updated
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: token
+      description: Slack OAuth token with appropriate scopes

@@ -1,0 +1,122 @@
+openapi: 3.1.0
+info:
+  title: Brave Search API
+  description: |
+    REST API to query Brave Search and get back search results from the web.
+    To try the API on a Free plan, you'll still need to subscribe — you simply won't be charged.
+    Once subscribed, you can get an API key in the API Keys section.
+  version: 1.0.0
+servers:
+  - url: https://api.search.brave.com/res/v1
+    description: Brave Search API endpoint
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /web/search:
+    get:
+      summary: Web Search
+      description: Endpoint to query Brave Search and get back search results from the web
+      operationId: webSearch
+      parameters:
+        - name: q
+          in: query
+          description: Search query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful search response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSearchApiResponse'
+  /local/pois:
+    get:
+      summary: Local Points of Interest
+      description: Get extra information about locations, including pictures and related web results
+      operationId: localPois
+      parameters:
+        - name: ids
+          in: query
+          description: Location IDs (can specify multiple)
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+      responses:
+        '200':
+          description: Successful local POI response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocalPoiSearchApiResponse'
+  
+  /local/descriptions:
+    get:
+      summary: Local Descriptions
+      description: Get AI generated descriptions for locations
+      operationId: localDescriptions
+      parameters:
+        - name: ids
+          in: query
+          description: Location IDs (can specify multiple)
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+      responses:
+        '200':
+          description: Successful local descriptions response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocalDescriptionsSearchApiResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Subscription-Token
+      description: API key provided by Brave after subscription
+  
+  schemas:
+    WebSearchApiResponse:
+      type: object
+      properties:
+        locations:
+          type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/LocationResult'
+        
+    LocationResult:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Temporary ID that can be used to retrieve extra information about the location
+        title:
+          type: string
+          description: Title of the location
+    
+    LocalPoiSearchApiResponse:
+      type: object
+      description: Response containing detailed information about locations
+      # Exact structure would need to be detailed based on actual API responses
+    
+    LocalDescriptionsSearchApiResponse:
+      type: object
+      description: Response containing AI-generated descriptions for locations
+      # Exact structure would need to be detailed based on actual API responses

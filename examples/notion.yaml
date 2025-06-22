@@ -1,0 +1,873 @@
+openapi: 3.1.0
+info:
+  title: Notion API
+  description: |
+    The Notion API allows you to integrate with Notion pages, databases, and users.
+    This API provides access to create, read, update, and delete pages, databases, blocks, and more.
+    For detailed information, visit https://developers.notion.com/reference
+  version: 2021-08-16
+servers:
+  - url: https://api.notion.com/v1
+    description: Notion API endpoint
+
+security:
+  - NotionAuth: []
+
+paths:
+  /databases:
+    get:
+      summary: List databases
+      description: List all databases shared with the integration
+      operationId: listDatabases
+      parameters:
+        - name: start_cursor
+          in: query
+          description: Pagination cursor
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          description: Number of results to return
+          schema:
+            type: integer
+            default: 100
+            maximum: 100
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDatabasesResponse'
+    post:
+      summary: Create a database
+      description: Create a database as a child of an existing page
+      operationId: createDatabase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDatabaseRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Database'
+
+  /databases/{database_id}:
+    get:
+      summary: Retrieve a database
+      description: Retrieves a database by ID
+      operationId: retrieveDatabase
+      parameters:
+        - name: database_id
+          in: path
+          required: true
+          description: Identifier for the database
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Database'
+    patch:
+      summary: Update database
+      description: Update database properties
+      operationId: updateDatabase
+      parameters:
+        - name: database_id
+          in: path
+          required: true
+          description: Identifier for the database
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDatabaseRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Database'
+
+  /databases/{database_id}/query:
+    post:
+      summary: Query a database
+      description: Query a database with filters, sorts, and pagination
+      operationId: queryDatabase
+      parameters:
+        - name: database_id
+          in: path
+          required: true
+          description: Identifier for the database
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryDatabaseRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryDatabaseResponse'
+
+  /pages:
+    post:
+      summary: Create a page
+      description: Create a new page in a database or as a child of another page
+      operationId: createPage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePageRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page'
+
+  /pages/{page_id}:
+    get:
+      summary: Retrieve a page
+      description: Retrieves a page by ID
+      operationId: retrievePage
+      parameters:
+        - name: page_id
+          in: path
+          required: true
+          description: Identifier for the page
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page'
+    patch:
+      summary: Update page
+      description: Update page properties
+      operationId: updatePage
+      parameters:
+        - name: page_id
+          in: path
+          required: true
+          description: Identifier for the page
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePageRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page'
+
+  /blocks/{block_id}:
+    get:
+      summary: Retrieve a block
+      description: Retrieves a block by ID
+      operationId: retrieveBlock
+      parameters:
+        - name: block_id
+          in: path
+          required: true
+          description: Identifier for the block
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Block'
+    patch:
+      summary: Update a block
+      description: Updates a block's content
+      operationId: updateBlock
+      parameters:
+        - name: block_id
+          in: path
+          required: true
+          description: Identifier for the block
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBlockRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Block'
+    delete:
+      summary: Delete a block
+      description: Sets a block's archived property to true
+      operationId: deleteBlock
+      parameters:
+        - name: block_id
+          in: path
+          required: true
+          description: Identifier for the block
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Block'
+
+  /blocks/{block_id}/children:
+    get:
+      summary: Retrieve block children
+      description: Returns a paginated array of child blocks
+      operationId: retrieveBlockChildren
+      parameters:
+        - name: block_id
+          in: path
+          required: true
+          description: Identifier for the block
+          schema:
+            type: string
+        - name: start_cursor
+          in: query
+          description: Pagination cursor
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          description: Number of results to return
+          schema:
+            type: integer
+            default: 100
+            maximum: 100
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListBlockChildrenResponse'
+    patch:
+      summary: Append block children
+      description: Appends children to a block
+      operationId: appendBlockChildren
+      parameters:
+        - name: block_id
+          in: path
+          required: true
+          description: Identifier for the block
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppendBlockChildrenRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppendBlockChildrenResponse'
+
+  /users:
+    get:
+      summary: List all users
+      description: Returns a paginated list of users for the workspace
+      operationId: listUsers
+      parameters:
+        - name: start_cursor
+          in: query
+          description: Pagination cursor
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          description: Number of results to return
+          schema:
+            type: integer
+            default: 100
+            maximum: 100
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUsersResponse'
+
+  /users/{user_id}:
+    get:
+      summary: Retrieve a user
+      description: Retrieves a user by ID
+      operationId: retrieveUser
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Identifier for the user
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /search:
+    post:
+      summary: Search
+      description: Searches for pages and databases
+      operationId: search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+
+components:
+  securitySchemes:
+    NotionAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: token
+      description: Notion API key or OAuth token
+
+  schemas:
+    ListDatabasesResponse:
+      type: object
+      properties:
+        object:
+          type: string
+          enum: [list]
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Database'
+        next_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+
+    CreateDatabaseRequest:
+      type: object
+      required:
+        - parent
+        - title
+        - properties
+      properties:
+        parent:
+          type: object
+          required:
+            - type
+            - page_id
+          properties:
+            type:
+              type: string
+              enum: [page_id]
+            page_id:
+              type: string
+        title:
+          type: array
+          items:
+            $ref: '#/components/schemas/RichText'
+        properties:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/DatabaseProperty'
+
+    Database:
+      type: object
+      properties:
+        id:
+          type: string
+        created_time:
+          type: string
+          format: date-time
+        last_edited_time:
+          type: string
+          format: date-time
+        title:
+          type: array
+          items:
+            $ref: '#/components/schemas/RichText'
+        properties:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/DatabaseProperty'
+        parent:
+          $ref: '#/components/schemas/Parent'
+        url:
+          type: string
+          format: uri
+
+    UpdateDatabaseRequest:
+      type: object
+      properties:
+        title:
+          type: array
+          items:
+            $ref: '#/components/schemas/RichText'
+        properties:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/DatabaseProperty'
+
+    QueryDatabaseRequest:
+      type: object
+      properties:
+        filter:
+          $ref: '#/components/schemas/Filter'
+        sorts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sort'
+        start_cursor:
+          type: string
+        page_size:
+          type: integer
+          default: 100
+          maximum: 100
+
+    QueryDatabaseResponse:
+      type: object
+      properties:
+        object:
+          type: string
+          enum: [list]
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Page'
+        next_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+
+    CreatePageRequest:
+      type: object
+      required:
+        - parent
+        - properties
+      properties:
+        parent:
+          $ref: '#/components/schemas/Parent'
+        properties:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/PropertyValue'
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/Block'
+
+    Page:
+      type: object
+      properties:
+        id:
+          type: string
+        created_time:
+          type: string
+          format: date-time
+        last_edited_time:
+          type: string
+          format: date-time
+        archived:
+          type: boolean
+        properties:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/PropertyValue'
+        parent:
+          $ref: '#/components/schemas/Parent'
+        url:
+          type: string
+          format: uri
+
+    UpdatePageRequest:
+      type: object
+      properties:
+        properties:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/PropertyValue'
+        archived:
+          type: boolean
+
+    UpdateBlockRequest:
+      type: object
+      properties:
+        paragraph:
+          type: object
+          properties:
+            rich_text:
+              type: array
+              items:
+                $ref: '#/components/schemas/RichText'
+        heading_1:
+          type: object
+          properties:
+            rich_text:
+              type: array
+              items:
+                $ref: '#/components/schemas/RichText'
+        heading_2:
+          type: object
+          properties:
+            rich_text:
+              type: array
+              items:
+                $ref: '#/components/schemas/RichText'
+        heading_3:
+          type: object
+          properties:
+            rich_text:
+              type: array
+              items:
+                $ref: '#/components/schemas/RichText'
+        bulleted_list_item:
+          type: object
+          properties:
+            rich_text:
+              type: array
+              items:
+                $ref: '#/components/schemas/RichText'
+        numbered_list_item:
+          type: object
+          properties:
+            rich_text:
+              type: array
+              items:
+                $ref: '#/components/schemas/RichText'
+        to_do:
+          type: object
+          properties:
+            rich_text:
+              type: array
+              items:
+                $ref: '#/components/schemas/RichText'
+            checked:
+              type: boolean
+        archived:
+          type: boolean
+
+    ListBlockChildrenResponse:
+      type: object
+      properties:
+        object:
+          type: string
+          enum: [list]
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Block'
+        next_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+
+    AppendBlockChildrenRequest:
+      type: object
+      required:
+        - children
+      properties:
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/Block'
+
+    AppendBlockChildrenResponse:
+      type: object
+      properties:
+        object:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Block'
+
+    ListUsersResponse:
+      type: object
+      properties:
+        object:
+          type: string
+          enum: [list]
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        next_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+        type:
+          type: string
+          enum: [person, bot]
+        person:
+          type: object
+          properties:
+            email:
+              type: string
+              format: email
+        bot:
+          type: object
+
+    SearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+        sort:
+          $ref: '#/components/schemas/Sort'
+        filter:
+          type: object
+          properties:
+            value:
+              type: string
+              enum: [page, database]
+            property:
+              type: string
+              enum: [object]
+        start_cursor:
+          type: string
+        page_size:
+          type: integer
+          default: 100
+          maximum: 100
+
+    SearchResponse:
+      type: object
+      properties:
+        object:
+          type: string
+          enum: [list]
+        results:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/Page'
+              - $ref: '#/components/schemas/Database'
+        next_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+
+    Parent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [database_id, page_id, workspace]
+        database_id:
+          type: string
+        page_id:
+          type: string
+
+    PropertyValue:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: array
+          items:
+            $ref: '#/components/schemas/RichText'
+        rich_text:
+          type: array
+          items:
+            $ref: '#/components/schemas/RichText'
+        number:
+          type: number
+        select:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            color:
+              type: string
+        multi_select:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              color:
+                type: string
+        date:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+              nullable: true
+        formula:
+          type: object
+        relation:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+        rollup:
+          type: object
+        people:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              type:
+                type: string
+              file:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                  expiry_time:
+                    type: string
+                    format: date-time
+              external:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+        checkbox:
+          type: boolean
+        url:
+          type: string
+          format: uri
+        email:
+          type: string
+          format: email
+        phone_number:
+          type: string
+        created_time:
+          type: string
+          format: date-time
+        created_by:
+          $ref: '#/components/schemas/User'
+        last_edited_time:
+          type: string
+          format: date-time
+        last_edited_by:
+          $ref: '#/components/schemas/User'
+
+    Sort:
+      type: object
+      properties:
+        property:
+          type: string
+        direction:
+          type: string
+          enum: [ascending, descending]
+        timestamp:
+          type: string
+          enum: [created_time, last_edited_time]
+
+    Block:
+      type: object
+      properties:
+        object:
+          type: string
+          enum: [block]
+        id:
+          type: string
+        type:
+          type: string
+          enum: [paragraph, heading_1, heading_2, heading_3, bulleted_list_item, numbered_list_item, to_do, toggle, code, child_page, child_database, embed, image, video, file, pdf, bookmark, callout, quote, divider, table, column, column_list, link_preview, synced_block, template, link_to_page, table_of_contents, breadcrumb, equation, unsupported]
+        created_time:
+          type: string
+          format: date-time
+        last_edited_time:
+          type: string
+          format: date-time
+        has_children:
+          type: boolean
+        archived:
+          type: boolean
+
+
+

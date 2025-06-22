@@ -1,0 +1,1025 @@
+openapi: 3.1.0
+info:
+  title: YouTube Data API
+  description: |
+    The YouTube Data API lets you incorporate functions normally executed on the YouTube website into your own website or application.
+    This API provides access to create, update, delete, and retrieve YouTube resources like videos, playlists, channels, and more.
+    For detailed information, visit https://developers.google.com/youtube/v3/docs
+  version: v3
+servers:
+  - url: https://www.googleapis.com/youtube/v3
+    description: YouTube Data API endpoint
+
+security:
+  - ApiKeyAuth: []
+  - OAuth2: []
+
+paths:
+  /search:
+    get:
+      summary: Search for resources
+      description: Returns a collection of search results that match the query parameters specified in the API request. By default, a search result set identifies matching video, channel, and playlist resources.
+      operationId: searchList
+      parameters:
+        - name: part
+          in: query
+          description: The part parameter specifies a comma-separated list of one or more search resource properties that the API response will include.
+          required: true
+          schema:
+            type: string
+            default: "snippet"
+        - name: q
+          in: query
+          description: The q parameter specifies the query term to search for.
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: The type parameter restricts a search query to only retrieve a particular type of resource.
+          schema:
+            type: string
+            enum: [channel, playlist, video]
+      responses:
+        '200':
+          description: Successful search response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchListResponse'
+  
+  /videos:
+    get:
+      summary: List videos
+      description: Returns a list of videos that match the API request parameters.
+      operationId: videosList
+      parameters:
+        - name: part
+          in: query
+          description: The part parameter specifies a comma-separated list of one or more video resource properties that the API response will include.
+          required: true
+          schema:
+            type: string
+            default: "snippet,contentDetails,statistics"
+        - name: id
+          in: query
+          description: The id parameter specifies a comma-separated list of the YouTube video ID(s) for the resource(s) that are being retrieved.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful video list response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoListResponse'
+    post:
+      summary: Upload a video
+      description: Uploads a video to YouTube and optionally sets the video's metadata.
+      operationId: videosInsert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Video'
+      responses:
+        '200':
+          description: Successful video upload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+    delete:
+      summary: Delete a video
+      description: Deletes a YouTube video.
+      operationId: videosDelete
+      parameters:
+        - name: id
+          in: query
+          description: The id parameter specifies the YouTube video ID for the resource that is being deleted.
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successful video deletion
+  
+  /channels:
+    get:
+      summary: List channels
+      description: Returns a collection of zero or more channel resources that match the request criteria.
+      operationId: channelsList
+      parameters:
+        - name: part
+          in: query
+          description: The part parameter specifies a comma-separated list of one or more channel resource properties that the API response will include.
+          required: true
+          schema:
+            type: string
+            default: "snippet,contentDetails,statistics"
+        - name: id
+          in: query
+          description: The id parameter specifies a comma-separated list of the YouTube channel ID(s) for the resource(s) that are being retrieved.
+          schema:
+            type: string
+        - name: forUsername
+          in: query
+          description: The forUsername parameter specifies a YouTube username, thereby requesting the channel associated with that username.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful channel list response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelListResponse'
+  
+  /playlists:
+    get:
+      summary: List playlists
+      description: Returns a collection of playlists that match the API request parameters.
+      operationId: playlistsList
+      parameters:
+        - name: part
+          in: query
+          description: The part parameter specifies a comma-separated list of one or more playlist resource properties that the API response will include.
+          required: true
+          schema:
+            type: string
+            default: "snippet,contentDetails"
+        - name: channelId
+          in: query
+          description: The channelId parameter indicates that the API should only return the specified channel's playlists.
+          schema:
+            type: string
+        - name: id
+          in: query
+          description: The id parameter specifies a comma-separated list of the YouTube playlist ID(s) for the resource(s) that are being retrieved.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful playlist list response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaylistListResponse'
+    post:
+      summary: Create a playlist
+      description: Creates a playlist.
+      operationId: playlistsInsert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Playlist'
+      responses:
+        '200':
+          description: Successful playlist creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Playlist'
+  
+  /playlistItems:
+    get:
+      summary: List playlist items
+      description: Returns a collection of playlist items that match the API request parameters.
+      operationId: playlistItemsList
+      parameters:
+        - name: part
+          in: query
+          description: The part parameter specifies a comma-separated list of one or more playlistItem resource properties that the API response will include.
+          required: true
+          schema:
+            type: string
+            default: "snippet,contentDetails"
+        - name: playlistId
+          in: query
+          description: The playlistId parameter specifies the unique ID of the playlist for which you want to retrieve playlist items.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful playlist items list response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaylistItemListResponse'
+    post:
+      summary: Add a resource to a playlist
+      description: Adds a resource to a playlist.
+      operationId: playlistItemsInsert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaylistItem'
+      responses:
+        '200':
+          description: Successful playlist item insertion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaylistItem'
+  
+  /subscriptions:
+    get:
+      summary: List subscriptions
+      description: Returns subscription resources that match the API request criteria.
+      operationId: subscriptionsList
+      parameters:
+        - name: part
+          in: query
+          description: The part parameter specifies a comma-separated list of one or more subscription resource properties that the API response will include.
+          required: true
+          schema:
+            type: string
+            default: "snippet,contentDetails"
+        - name: channelId
+          in: query
+          description: The channelId parameter specifies a YouTube channel ID. The API will only return that channel's subscriptions.
+          schema:
+            type: string
+        - name: mine
+          in: query
+          description: Set this parameter's value to true to retrieve a feed of the authenticated user's subscriptions.
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Successful subscriptions list response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionListResponse'
+    post:
+      summary: Create a subscription
+      description: Adds a subscription for the authenticated user's channel.
+      operationId: subscriptionsInsert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Subscription'
+      responses:
+        '200':
+          description: Successful subscription creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+    delete:
+      summary: Delete a subscription
+      description: Deletes a subscription.
+      operationId: subscriptionsDelete
+      parameters:
+        - name: id
+          in: query
+          description: The id parameter specifies the YouTube subscription ID for the resource that is being deleted.
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successful subscription deletion
+  
+  /comments:
+    get:
+      summary: List comments
+      description: Returns a list of comments that match the API request parameters.
+      operationId: commentsList
+      parameters:
+        - name: part
+          in: query
+          description: The part parameter specifies a comma-separated list of one or more comment resource properties that the API response will include.
+          required: true
+          schema:
+            type: string
+            default: "snippet"
+        - name: id
+          in: query
+          description: The id parameter specifies a comma-separated list of comment IDs for the resources that are being retrieved.
+          schema:
+            type: string
+        - name: parentId
+          in: query
+          description: The parentId parameter specifies the ID of the comment for which replies should be retrieved.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful comments list response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+    post:
+      summary: Create a comment
+      description: Creates a reply to an existing comment.
+      operationId: commentsInsert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Comment'
+      responses:
+        '200':
+          description: Successful comment creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+    delete:
+      summary: Delete a comment
+      description: Deletes a comment.
+      operationId: commentsDelete
+      parameters:
+        - name: id
+          in: query
+          description: The id parameter specifies the comment ID for the resource that is being deleted.
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successful comment deletion
+  
+  /commentThreads:
+    get:
+      summary: List comment threads
+      description: Returns a list of comment threads that match the API request parameters.
+      operationId: commentThreadsList
+      parameters:
+        - name: part
+          in: query
+          description: The part parameter specifies a comma-separated list of one or more commentThread resource properties that the API response will include.
+          required: true
+          schema:
+            type: string
+            default: "snippet"
+        - name: videoId
+          in: query
+          description: The videoId parameter instructs the API to return comment threads associated with the specified video ID.
+          schema:
+            type: string
+        - name: channelId
+          in: query
+          description: The channelId parameter instructs the API to return comment threads containing comments about the specified channel.
+          schema:
+            type: string
+        - name: id
+          in: query
+          description: The id parameter specifies a comma-separated list of comment thread IDs for the resources that should be retrieved.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful comment threads list response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentThreadListResponse'
+    post:
+      summary: Create a comment thread
+      description: Creates a new top-level comment.
+      operationId: commentThreadsInsert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentThread'
+      responses:
+        '200':
+          description: Successful comment thread creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentThread'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: query
+      name: key
+      description: API key for authorization
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.google.com/o/oauth2/auth
+          tokenUrl: https://oauth2.googleapis.com/token
+          scopes:
+            https://www.googleapis.com/auth/youtube: Manage your YouTube account
+            https://www.googleapis.com/auth/youtube.readonly: View your YouTube account
+            https://www.googleapis.com/auth/youtube.upload: Upload YouTube videos
+            https://www.googleapis.com/auth/youtube.force-ssl: See, edit, and permanently delete your YouTube videos, ratings, comments and captions
+  
+  schemas:
+    SearchListResponse:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: Identifies the API resource's type.
+          example: "youtube#searchListResponse"
+        etag:
+          type: string
+          description: The Etag of this resource.
+        nextPageToken:
+          type: string
+          description: The token that can be used as the value of the pageToken parameter to retrieve the next page in the result set.
+        prevPageToken:
+          type: string
+          description: The token that can be used as the value of the pageToken parameter to retrieve the previous page in the result set.
+        pageInfo:
+          type: object
+          properties:
+            totalResults:
+              type: integer
+              description: The total number of results in the result set.
+            resultsPerPage:
+              type: integer
+              description: The number of results included in the API response.
+        items:
+          type: array
+          description: A list of results that match the search criteria.
+          items:
+            $ref: '#/components/schemas/SearchResult'
+    
+    SearchResult:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: Identifies the API resource's type.
+          example: "youtube#searchResult"
+        etag:
+          type: string
+          description: The Etag of this resource.
+        id:
+          type: object
+          properties:
+            kind:
+              type: string
+              description: The type of the API resource.
+            videoId:
+              type: string
+              description: The ID that YouTube uses to uniquely identify the referred video.
+            channelId:
+              type: string
+              description: The ID that YouTube uses to uniquely identify the referred channel.
+            playlistId:
+              type: string
+              description: The ID that YouTube uses to uniquely identify the referred playlist.
+        snippet:
+          $ref: '#/components/schemas/SearchResultSnippet'
+    
+    SearchResultSnippet:
+      type: object
+      properties:
+        publishedAt:
+          type: string
+          format: date-time
+          description: The creation date and time of the resource.
+        channelId:
+          type: string
+          description: The ID that YouTube uses to uniquely identify the channel that published the resource.
+        title:
+          type: string
+          description: The title of the search result.
+        description:
+          type: string
+          description: A description of the search result.
+        thumbnails:
+          $ref: '#/components/schemas/ThumbnailDetails'
+        channelTitle:
+          type: string
+          description: The title of the channel that published the resource.
+    
+    VideoListResponse:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: Identifies the API resource's type.
+          example: "youtube#videoListResponse"
+        etag:
+          type: string
+          description: The Etag of this resource.
+        nextPageToken:
+          type: string
+          description: The token that can be used as the value of the pageToken parameter to retrieve the next page in the result set.
+        prevPageToken:
+          type: string
+          description: The token that can be used as the value of the pageToken parameter to retrieve the previous page in the result set.
+        pageInfo:
+          type: object
+          properties:
+            totalResults:
+              type: integer
+              description: The total number of results in the result set.
+            resultsPerPage:
+              type: integer
+              description: The number of results included in the API response.
+        items:
+          type: array
+          description: A list of videos that match the request criteria.
+          items:
+            $ref: '#/components/schemas/Video'
+    
+    Video:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: Identifies the API resource's type.
+          example: "youtube#video"
+        etag:
+          type: string
+          description: The Etag of this resource.
+        id:
+          type: string
+          description: The ID that YouTube uses to uniquely identify the video.
+        snippet:
+          $ref: '#/components/schemas/VideoSnippet'
+        contentDetails:
+          $ref: '#/components/schemas/VideoContentDetails'
+        statistics:
+          $ref: '#/components/schemas/VideoStatistics'
+    
+    VideoSnippet:
+      type: object
+      properties:
+        publishedAt:
+          type: string
+          format: date-time
+          description: The date and time that the video was published.
+        channelId:
+          type: string
+          description: The ID that YouTube uses to uniquely identify the channel that the video was uploaded to.
+        title:
+          type: string
+          description: The video's title.
+        description:
+          type: string
+          description: The video's description.
+        thumbnails:
+          $ref: '#/components/schemas/ThumbnailDetails'
+        channelTitle:
+          type: string
+          description: Channel title for the channel that the video belongs to.
+        tags:
+          type: array
+          description: A list of keyword tags associated with the video.
+          items:
+            type: string
+        categoryId:
+          type: string
+          description: The YouTube video category associated with the video.
+    
+    VideoContentDetails:
+      type: object
+      properties:
+        duration:
+          type: string
+          description: The length of the video in ISO 8601 format.
+        dimension:
+          type: string
+          description: Indicates whether the video is available in 3D or in 2D.
+        definition:
+          type: string
+          description: Indicates whether the video is available in high definition (HD) or only in standard definition.
+          enum: [hd, sd]
+        caption:
+          type: string
+          description: Indicates whether captions are available for the video.
+          enum: [true, false]
+        licensedContent:
+          type: boolean
+          description: Indicates whether the video represents licensed content.
+    
+    VideoStatistics:
+      type: object
+      properties:
+        viewCount:
+          type: string
+          description: The number of times the video has been viewed.
+        likeCount:
+          type: string
+          description: The number of users who have indicated that they liked the video.
+        dislikeCount:
+          type: string
+          description: The number of users who have indicated that they disliked the video.
+        favoriteCount:
+          type: string
+          description: The number of users who have marked the video as a favorite video.
+        commentCount:
+          type: string
+          description: The number of comments for the video.
+    
+    ChannelListResponse:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: Identifies the API resource's type.
+          example: "youtube#channelListResponse"
+        etag:
+          type: string
+          description: The Etag of this resource.
+        nextPageToken:
+          type: string
+          description: The token that can be used as the value of the pageToken parameter to retrieve the next page in the result set.
+        prevPageToken:
+          type: string
+          description: The token that can be used as the value of the pageToken parameter to retrieve the previous page in the result set.
+        pageInfo:
+          type: object
+          properties:
+            totalResults:
+              type: integer
+              description: The total number of results in the result set.
+            resultsPerPage:
+              type: integer
+              description: The number of results included in the API response.
+        items:
+          type: array
+          description: A list of channels that match the request criteria.
+          items:
+            $ref: '#/components/schemas/Channel'
+    
+    Channel:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: Identifies the API resource's type.
+          example: "youtube#channel"
+        etag:
+          type: string
+          description: The Etag of this resource.
+        id:
+          type: string
+          description: The ID that YouTube uses to uniquely identify the channel.
+        snippet:
+          $ref: '#/components/schemas/ChannelSnippet'
+        contentDetails:
+          $ref: '#/components/schemas/ChannelContentDetails'
+        statistics:
+          $ref: '#/components/schemas/ChannelStatistics'
+    
+    ChannelSnippet:
+      type: object
+      properties:
+        title:
+          type: string
+          description: The channel's title.
+        description:
+          type: string
+          description: The channel's description.
+        customUrl:
+          type: string
+          description: The channel's custom URL.
+        publishedAt:
+          type: string
+          format: date-time
+          description: The date and time that the channel was created.
+        thumbnails:
+          $ref: '#/components/schemas/ThumbnailDetails'
+        country:
+          type: string
+          description: The country where the channel is located.
+    
+    ChannelContentDetails:
+      type: object
+      properties:
+        relatedPlaylists:
+          type: object
+          properties:
+            likes:
+              type: string
+              description: The ID of the playlist that contains the channel's liked videos.
+            favorites:
+              type: string
+              description: The ID of the playlist that contains the channel's favorite videos.
+            uploads:
+              type: string
+              description: The ID of the playlist that contains the channel's uploaded videos.
+    
+    ChannelStatistics:
+      type: object
+      properties:
+        viewCount:
+          type: string
+          description: The number of times the channel has been viewed.
+        subscriberCount:
+          type: string
+          description: The number of subscribers that the channel has.
+        hiddenSubscriberCount:
+          type: boolean
+          description: Indicates whether the channel's subscriber count is publicly visible.
+        videoCount:
+          type: string
+          description: The number of videos uploaded to the channel.
+    
+    PlaylistListResponse:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: Identifies the API resource's type.
+          example: "youtube#playlistListResponse"
+        etag:
+          type: string
+          description: The Etag of this resource.
+        nextPageToken:
+          type: string
+          description: The token that can be used as the value of the pageToken parameter to retrieve the next page in the result set.
+        prevPageToken:
+          type: string
+          description: The token that can be used as the value of the pageToken parameter to retrieve the previous page in the result set.
+        pageInfo:
+          type: object
+          properties:
+            totalResults:
+              type: integer
+              description: The total number of results in the result set.
+            resultsPerPage:
+              type: integer
+              description: The number of results included in the API response.
+        items:
+          type: array
+          description: A list of playlists that match the request criteria.
+          items:
+            $ref: '#/components/schemas/Playlist'
+    
+    Playlist:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: Identifies the API resource's type.
+          example: "youtube#playlist"
+        etag:
+          type: string
+          description: The Etag of this resource.
+        id:
+          type: string
+          description: The ID that YouTube uses to uniquely identify the playlist.
+        snippet:
+          $ref: '#/components/schemas/PlaylistSnippet'
+        contentDetails:
+          $ref: '#/components/schemas/PlaylistContentDetails'
+    
+    PlaylistSnippet:
+      type: object
+      properties:
+        publishedAt:
+          type: string
+          format: date-time
+          description: The date and time that the playlist was created.
+        channelId:
+          type: string
+          description: The ID that YouTube uses to uniquely identify the channel that published the playlist.
+        title:
+          type: string
+          description: The playlist's title.
+        description:
+          type: string
+          description: The playlist's description.
+        thumbnails:
+          $ref: '#/components/schemas/ThumbnailDetails'
+        channelTitle:
+          type: string
+          description: The channel title of the channel that the video belongs to.
+    
+    PlaylistContentDetails:
+      type: object
+      properties:
+        itemCount:
+          type: integer
+          description: The number of videos in the playlist.
+    
+    PlaylistItemListResponse:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: Identifies the API resource's type.
+          example: "youtube#playlistItemListResponse"
+        etag:
+          type: string
+          description: The Etag of this resource.
+        nextPageToken:
+          type: string
+          description: The token that can be used as the value of the pageToken parameter to retrieve the next page in the result set.
+        prevPageToken:
+          type: string
+          description: The token that can be used as the value of the pageToken parameter to retrieve the previous page in the result set.
+        pageInfo:
+          type: object
+          properties:
+            totalResults:
+              type: integer
+              description: The total number of results in the result set.
+            resultsPerPage:
+              type: integer
+              description: The number of results included in the API response.
+        items:
+          type: array
+          description: A list of playlist items that match the request criteria.
+          items:
+            $ref: '#/components/schemas/PlaylistItem'
+    
+    PlaylistItem:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: Identifies the API resource's type.
+          example: "youtube#playlistItem"
+        etag:
+          type: string
+          description: The Etag of this resource.
+        id:
+          type: string
+          description: The ID that YouTube uses to uniquely identify the playlist item.
+        snippet:
+          $ref: '#/components/schemas/PlaylistItemSnippet'
+        contentDetails:
+          $ref: '#/components/schemas/PlaylistItemContentDetails'
+    
+    PlaylistItemSnippet:
+      type: object
+      properties:
+        publishedAt:
+          type: string
+          format: date-time
+          description: The date and time that the item was added to the playlist.
+        channelId:
+          type: string
+          description: The ID that YouTube uses to uniquely identify the user that added the item to the playlist.
+        title:
+          type: string
+          description: The item's title.
+        description:
+          type: string
+          description: The item's description.
+        thumbnails:
+          $ref: '#/components/schemas/ThumbnailDetails'
+        channelTitle:
+          type: string
+          description: Channel title for the channel that the playlist item belongs to.
+        playlistId:
+          type: string
+          description: The ID that YouTube uses to uniquely identify the playlist that the playlist item is in.
+        position:
+          type: integer
+          description: The order in which the item appears in the playlist.
+        resourceId:
+          type: object
+          properties:
+            kind:
+              type: string
+              description: The type of the API resource.
+            videoId:
+              type: string
+              description: The ID that YouTube uses to uniquely identify the referred video.
+    
+    PlaylistItemContentDetails:
+      type: object
+      properties:
+        videoId:
+          type: string
+          description: The ID that YouTube uses to uniquely identify a video.
+        startAt:
+          type: string
+          description: The time, measured in seconds from the start of the video, when the player should start playing the video.
+        endAt:
+          type: string
+          description: The time, measured in seconds from the start of the video, when the player should stop playing the video.
+        note:
+          type: string
+          description: A user-generated note for this item.
+    
+    SubscriptionListResponse:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: Identifies the API resource's type.
+          example: "youtube#subscriptionListResponse"
+        etag:
+          type: string
+          description: The Etag of this resource.
+        nextPageToken:
+          type: string
+          description: The token that can be used as the value of the pageToken parameter to retrieve the next page in the result set.
+        prevPageToken:
+          type: string
+          description: The token that can be used as the value of the pageToken parameter to retrieve the previous page in the result set.
+        pageInfo:
+          type: object
+          properties:
+            totalResults:
+              type: integer
+              description: The total number of results in the result set.
+            resultsPerPage:
+              type: integer
+              description: The number of results included in the API response.
+        items:
+          type: array
+          description: A list of subscriptions that match the request criteria.
+          items:
+            $ref: '#/components/schemas/Subscription'
+    
+    Subscription:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: Identifies the API resource's type.
+          example: "youtube#subscription"
+        etag:
+          type: string
+          description: The Etag of this resource.
+        id:
+          type: string
+          description: The ID that YouTube uses to uniquely identify the subscription.
+        snippet:
+          $ref: '#/components/schemas/SubscriptionSnippet'
+        contentDetails:
+          $ref: '#/components/schemas/SubscriptionContentDetails'
+    
+    SubscriptionSnippet:
+      type: object
+      properties:
+        publishedAt:
+          type: string
+          format: date-time
+          description: The date and time that the subscription was created.
+        channelTitle:
+          type: string
+          description: The title of the channel that the subscription belongs to.
+        title:
+          type: string
+          description: The subscription's title.
+        description:
+          type: string
+          description: The subscription's details.
+        resourceId:
+          type: object
+          properties:
+            kind:
+              type: string
+              description: The type of the API resource.
+            channelId:
+              type: string
+              description: The ID that YouTube uses to uniquely identify the referred channel.
+        thumbnails:
+          $ref: '#/components/schemas/ThumbnailDetails'
+    
+    SubscriptionContentDetails:
+      type: object
+      properties:
+        totalItemCount:
+          type: integer
+          description: The number of new items in the subscription since its content was last read.
+        newItemCount:
+          type: integer
+          description: The approximate number of items that the subscription points to.
+        activityType:
+          type: string
+          description: The type of activity this subscription is for (only uploads, all).
+    
+    ThumbnailDetails:
+      type: object
+      properties:
+        default:
+          $ref: '#/components/schemas/Thumbnail'
+        medium:
+          $ref: '#/components/schemas/Thumbnail'
+        high:
+          $ref: '#/components/schemas/Thumbnail'
+        standard:
+          $ref: '#/components/schemas/Thumbnail'
+        maxres:
+          $ref: '#/components/schemas/Thumbnail'
+    
+    Thumbnail:
+      type: object
+      properties:
+        url:
+          type: string
+
+
+
+
