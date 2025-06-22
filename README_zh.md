@@ -52,6 +52,7 @@ AUTHORIZATION_HEADERS="Basic xxxx"
 ```bash
 git clone https://github.com/constellation39/openapi-to-mcp
 cd openapi-to-mcp
+copy .env.example .env
 
 go run main.go
 #or
