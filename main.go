@@ -84,7 +84,7 @@ func start(transport string) error {
 		}
 		err = core.AddToolFromOpenAPI(
 			mcpServer,
-			core.LoadEnv("BASE_URL", ""),
+			core.LoadEnv("OPENAPI_BASE_URL", ""),
 			hdr,
 			doc,
 		)
@@ -105,11 +105,13 @@ func start(transport string) error {
 	case "stdio":
 		return server.ServeStdio(mcpServer)
 	case "sse":
+		baseURL := core.LoadEnv("MCP_BASE_URL", ":8080")
 		httpServer := server.NewSSEServer(mcpServer)
-		return httpServer.Start(":8080")
+		return httpServer.Start(baseURL)
 	case "stream":
+		baseURL := core.LoadEnv("MCP_BASE_URL", ":8080")
 		httpServer := server.NewStreamableHTTPServer(mcpServer, server.WithStateLess(true))
-		return httpServer.Start(":8080")
+		return httpServer.Start(baseURL)
 	default:
 		return fmt.Errorf("unknown MCP_TRANSPORT=%s", transport)
 	}

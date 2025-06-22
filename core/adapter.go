@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/constellation39/openapi-to-mcp/core/session"
 	"io"
+	"maps"
 	"net/http"
 	neturl "net/url"
 	"regexp"
@@ -286,10 +287,6 @@ func pickBaseURLFromDoc(doc v3high.Document) string {
 	return ""
 }
 
-// -------------------------------------------------------------------
-// 新增辅助函数
-// -------------------------------------------------------------------
-
 func collectBasicAuthSchemes(doc v3high.Document) map[string]struct{} {
 	basicSchemes := map[string]struct{}{}
 	if doc.Components == nil || doc.Components.SecuritySchemes == nil {
@@ -349,11 +346,7 @@ func AddToolFromOpenAPI(
 		needAuth := needBasicAuth(op, doc, basicAuthSchemes)
 		opHeaders := extraHeaders
 		if needAuth {
-			opHeaders = make(map[string]string, len(extraHeaders)+1)
-			for k, v := range extraHeaders {
-				opHeaders[k] = v
-			}
-
+			opHeaders = maps.Clone(extraHeaders)
 			authorizationValue := LoadEnv("AUTHORIZATION_HEADERS", "")
 			if authorizationValue == "" {
 				tip := "This interface (%s) requires HTTP Basic authentication. Write AUTHORIZATION_HEADERS='{\"Authorization\": \"Basic xxxx\"}' in the environment variables."
