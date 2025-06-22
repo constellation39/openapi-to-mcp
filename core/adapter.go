@@ -151,7 +151,6 @@ func NewToolHandlerFromOp(
 			}
 		}
 
-		/********** 3. 用 “会话级” http.Client 发送请求 **********/
 		resp, err := cli.Do(req)
 		if err != nil {
 			return mcp.NewToolResultText("http do: " + err.Error()), nil
@@ -163,11 +162,6 @@ func NewToolHandlerFromOp(
 	}
 }
 
-// -------------------------------------------------------------------
-// 3. 其它辅助函数优化
-// -------------------------------------------------------------------
-
-// 简化分支查找
 func lookupMethodOperation(item *v3high.PathItem) (string, *v3high.Operation) {
 	m := map[string]*v3high.Operation{
 		"Get":     item.Get,

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	ServerName    = "mcp-link"
+	ServerName    = "openapi-to-mcp"
 	ServerVersion = "1.0.0"
 )
 
