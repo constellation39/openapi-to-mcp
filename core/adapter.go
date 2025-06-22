@@ -286,15 +286,58 @@ func pickBaseURLFromDoc(doc v3high.Document) string {
 	return ""
 }
 
+// -------------------------------------------------------------------
+// 新增辅助函数
+// -------------------------------------------------------------------
+
+func collectBasicAuthSchemes(doc v3high.Document) map[string]struct{} {
+	basicSchemes := map[string]struct{}{}
+	if doc.Components == nil || doc.Components.SecuritySchemes == nil {
+		return basicSchemes
+	}
+	for el := doc.Components.SecuritySchemes.First(); el != nil; el = el.Next() {
+		name := el.Key()
+		ss := el.Value()
+		if ss.Type == "http" && strings.EqualFold(ss.Scheme, "basic") {
+			basicSchemes[name] = struct{}{}
+		}
+	}
+	return basicSchemes
+}
+
+func needBasicAuth(op *v3high.Operation, doc v3high.Document, basicSchemes map[string]struct{}) bool {
+	check := func(secs []*v3base.SecurityRequirement) bool {
+		for _, sr := range secs {
+			if sr == nil || sr.Requirements == nil {
+				continue
+			}
+			for el := sr.Requirements.First(); el != nil; el = el.Next() {
+				if _, ok := basicSchemes[el.Key()]; ok {
+					return true
+				}
+			}
+		}
+		return false
+	}
+	if len(op.Security) > 0 {
+		return check(op.Security)
+	}
+	return check(doc.Security)
+}
+
 func AddToolFromOpenAPI(
 	mcpServer *server.MCPServer,
 	baseURL string,
 	extraHeaders map[string]string,
-	v3Model *libopenapi.DocumentModel[v3high.Document]) {
+	v3Model *libopenapi.DocumentModel[v3high.Document]) error {
+
 	doc := v3Model.Model
 	if baseURL == "" {
 		baseURL = pickBaseURLFromDoc(doc)
 	}
+
+	basicAuthSchemes := collectBasicAuthSchemes(doc)
+
 	for it := doc.Paths.PathItems.First(); it != nil; it = it.Next() {
 		path := it.Key()
 		item := it.Value()
@@ -303,18 +346,36 @@ func AddToolFromOpenAPI(
 			continue
 		}
 
+		needAuth := needBasicAuth(op, doc, basicAuthSchemes)
+		opHeaders := extraHeaders
+		if needAuth {
+			opHeaders = make(map[string]string, len(extraHeaders)+1)
+			for k, v := range extraHeaders {
+				opHeaders[k] = v
+			}
+
+			authorizationValue := LoadEnv("AUTHORIZATION_HEADERS", "")
+			if authorizationValue == "" {
+				tip := "This interface (%s) requires HTTP Basic authentication. Write AUTHORIZATION_HEADERS='{\"Authorization\": \"Basic xxxx\"}' in the environment variables."
+				return fmt.Errorf(fmt.Sprintf(tip, path))
+			}
+			opHeaders["Authorization"] = authorizationValue
+			tip := "This interface requires HTTP Basic authentication. MCP tool has been processed remotely."
+			op.Description = op.Description + tip
+		}
+
 		tool := buildOneTool(path, method, op, item)
 
 		paramIn, hasBody := collectParamLocation(item, op)
-
-		h := NewToolHandlerFromOp(baseURL, path, method, paramIn, hasBody, extraHeaders)
+		h := NewToolHandlerFromOp(baseURL, path, method, paramIn, hasBody, opHeaders)
 
 		mcpServer.AddTool(tool, h)
 	}
+
+	return nil
 }
 
-func collectParamLocation(item *v3high.PathItem,
-	op *v3high.Operation) (map[string]string, bool) {
+func collectParamLocation(item *v3high.PathItem, op *v3high.Operation) (map[string]string, bool) {
 
 	mp := map[string]string{}
 	for _, p := range mergeParameters(item.Parameters, op.Parameters) {

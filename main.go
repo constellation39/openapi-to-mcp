@@ -82,12 +82,15 @@ func start(transport string) error {
 		if err != nil {
 			logger.Fatalf("openapi load error: %v", err)
 		}
-		core.AddToolFromOpenAPI(
+		err = core.AddToolFromOpenAPI(
 			mcpServer,
 			core.LoadEnv("BASE_URL", ""),
 			hdr,
 			doc,
 		)
+		if err != nil {
+			logger.Fatal(err)
+		}
 	}
 
 	stop := make(chan os.Signal, 1)
