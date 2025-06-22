@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -55,17 +56,29 @@ func start(transport string) error {
 		logger.Printf("beforeCallTool: %v, %v\n", id, message)
 	})
 
-	mcpServer := server.NewMCPServer(
-		core.ServerName,
-		core.ServerVersion,
+	serverOptions := []server.ServerOption{
 		server.WithHooks(hooks),
 		server.WithToolHandlerMiddleware(core.NewLoggingMiddleware(logger).ToolMiddleware),
-		server.WithToolHandlerMiddleware(core.NewRateLimitMiddleware(1, 1).ToolMiddleware),
 		server.WithToolCapabilities(false),
 		server.WithResourceCapabilities(false, true),
 		server.WithPromptCapabilities(true),
 		server.WithRecovery(),
 		server.WithLogging(),
+	}
+
+	rpsStr := core.LoadEnv("RATE_LIMIT_PER_SECOND", "")
+	if rpsStr != "" {
+		rateLimit, err := strconv.ParseFloat(rpsStr, 64)
+		if err != nil {
+			return err
+		}
+		server.WithToolHandlerMiddleware(core.NewRateLimitMiddleware(rateLimit, 1).ToolMiddleware)
+	}
+
+	mcpServer := server.NewMCPServer(
+		core.ServerName,
+		core.ServerVersion,
+		serverOptions...,
 	)
 
 	extraHeadersStr := core.LoadEnv("EXTRA_HEADERS", "")
