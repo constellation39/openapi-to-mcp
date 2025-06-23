@@ -1,18 +1,18 @@
 # openapi-to-mcp
 
-`openapi-to-mcp` is a Go language implementation that converts OpenAPI specifications into MCP (Model Context Protocol) tools.
+`openapi-to-mcp` is a Go implementation for converting OpenAPI specifications into MCP (Model Context Protocol) tools.
 
 ## Overview
 
-This project aims to provide a flexible framework that allows developers to automatically expose existing OpenAPI interfaces as MCP tools through simple configuration, enabling AI models to directly call these interfaces.
+This project aims to provide a flexible framework that allows developers to automatically expose existing OpenAPI interfaces as MCP tools through simple configuration, enabling AI models to call these interfaces directly.
 
 ## Features
 
 - **OpenAPI to MCP Tool Conversion**: Automatically parses OpenAPI specifications and creates corresponding MCP tools based on the definitions.
-- **Multiple Transport Support**: Supports `stdio` (standard input/output), `sse` (Server-Sent Events), and `stream` (HTTP stream) as transport protocols for MCP communication.
-- **Configurable Middleware**: Built-in logging and rate-limiting middleware, with support for custom middleware to meet different business requirements.
-- **Session Management**: Provides session management functionality, allowing custom logic to be executed at the beginning and end of an MCP session.
-- **Environment Variable Configuration**: Flexible configuration through `.env` files or system environment variables.
+- **Multiple Transport Support**: Supports `stdio` (Standard I/O), `sse` (Server-Sent Events), and `stream` (HTTP Stream) as transport protocols for MCP communication.
+- **State Tracking & Authentication**: Supports cookie-based state tracking and JWT (JSON Web Token) handling.
+- **Rate Limiting**: Built-in rate limiting to prevent high-frequency calls to the Large Language Model (LLM).
+- **Environment Variable Configuration**: Flexible configuration via `.env` file or system environment variables.
 
 ## Quick Start
 
@@ -21,25 +21,26 @@ This project aims to provide a flexible framework that allows developers to auto
 Create a `.env` file or set the following environment variables:
 
 ```dotenv
-# MCP Transport method: stdio, sse, stream (default: stdio)
+# MCP transport: stdio, sse, stream (default: stdio)
 MCP_TRANSPORT="stdio"
-MCP_BASE_URL="127.0.0.1:8081"
+# MCP BASE URL
+MCP_BASE_URL="http://localhost:8080"
 
-# OpenAPI specification file path (can be a local file path or URL)
+# OpenAPI specification file path (can be a local file path or a URL)
 OPENAPI_SRC="./example/openapi.yaml"
 # Base URL for API requests
 OPENAPI_BASE_URL=
 
-# Additional HTTP headers (JSON format), e.g., '{"X-API-Key": "your-api-key"}'
+# Extra HTTP headers (JSON format), e.g., '{"X-API-Key": "your-api-key"}'
 EXTRA_HEADERS='{"X-API-Key": "your-api-key"}'
 
-# Whether to use cookies (true/false, default: true)
+# Use cookies (true/false, default: true)
 USE_COOKIE=true
 
-# Whether to output logs to standard output (true/false, default: false)
+# Output logs to standard output (true/false, default: false)
 LOG_OUTPUT=false
 
-# Rate limit: requests allowed per second (default: 1)
+# Rate limit: allowed requests per second (default: 1)
 RATE_LIMIT_PER_SECOND=1
 
 # Authorization header, e.g., "Basic xxxx"
@@ -61,7 +62,7 @@ go build .
 
 ### 3. Connect with an MCP Client
 
-Depending on your chosen `MCP_TRANSPORT` method, use the appropriate MCP client to connect to `openapi-to-mcp`.
+Depending on the `MCP_TRANSPORT` you've chosen, connect to `openapi-to-mcp` using a corresponding MCP client.
 
 **Stdio Mode (Default)**:
 
@@ -81,7 +82,7 @@ If `MCP_TRANSPORT` is set to `stdio`, you can configure your MCP client to run `
 }
 ```
 
-Or, if you have built the binary:
+Alternatively, if you have already built the binary, you can use it directly:
 
 ```json
 {
@@ -95,7 +96,7 @@ Or, if you have built the binary:
 
 **SSE Mode**:
 
-If `MCP_TRANSPORT` is set to `sse`, the server will start on `BASE_URL` (e.g., `http://localhost:8080`). You can configure your MCP client to connect to the SSE endpoint as follows:
+If `MCP_TRANSPORT` is set to `sse`, the server will start on the `BASE_URL` (e.g., `http://localhost:8080`). You can configure your MCP client to connect to the SSE endpoint as follows:
 
 ```json
 {
@@ -109,7 +110,7 @@ If `MCP_TRANSPORT` is set to `sse`, the server will start on `BASE_URL` (e.g., `
 
 **Stream Mode**:
 
-If `MCP_TRANSPORT` is set to `stream`, the server will start on `BASE_URL` (e.g., `http://localhost:8080`). You can configure your MCP client to connect to the Stream endpoint as follows:
+If `MCP_TRANSPORT` is set to `stream`, the server will start on the `BASE_URL` (e.g., `http://localhost:8080`). You can configure your MCP client to connect to the Stream endpoint as follows:
 
 ```json
 {
@@ -130,7 +131,7 @@ Please note that `http://localhost:8080` should be replaced with your actual con
 core/
   ├── openapi.go          # OpenAPI specification parsing and tool generation logic
   ├── session/            # Session management
-  ├── middleware.go       # MCP middleware definition
+  ├── middleware.go       # MCP middleware definitions
   └── utils.go            # Common utility functions
 example/
   ├── openapi.yaml        # Example OpenAPI specification file
@@ -141,9 +142,9 @@ go.mod
 go.sum
 ```
 
-## Contribution
+## Contributing
 
-Contributions are welcome! Feel free to submit Pull Requests or report Issues.
+Contributions are welcome! Feel free to submit a Pull Request or report an Issue.
 
 ## License
 
