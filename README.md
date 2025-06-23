@@ -1,5 +1,7 @@
 # openapi-to-mcp
 
+[简体中文](README_zh.md)
+
 `openapi-to-mcp` is a Go implementation for converting OpenAPI specifications into MCP (Model Context Protocol) tools.
 
 ## Overview
