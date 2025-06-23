@@ -1,102 +1,132 @@
 # openapi-to-mcp
 
-`openapi-to-mcp` 是一个将 OpenAPI 规范转换为 MCP (Model Context Protocol) 工具的 Go 语言实现。
+[English](README.md)
+
+`openapi-to-mcp` 是一个用于将 OpenAPI 规范转换为 MCP (模型上下文协议) 工具的 Go 实现。
 
 ## 概述
 
-该项目旨在提供一个灵活的框架，允许开发者通过简单的配置将现有的 OpenAPI 接口自动暴露为 MCP 工具，从而使得 AI 模型能够直接调用这些接口。
+本项目旨在提供一个灵活的框架，允许开发者通过简单的配置，将现有的 OpenAPI 接口自动暴露为 MCP 工具，从而使 AI 模型能够直接调用这些接口。
 
-## 特性
+## 功能特性
 
-- **OpenAPI 转换为 MCP 工具**: 自动解析 OpenAPI 规范，并根据规范定义创建相应的 MCP 工具。
-- **多种传输方式支持**: 支持 `stdio` (标准输入输出)、`sse` (Server-Sent Events) 和 `stream` (HTTP 流) 作为 MCP 通信的传输协议。
-- **状态追踪与认证**: 支持基于 Cookie 的状态追踪及 JWT (JSON Web Token) 处理。
-- **速率限制**: 内置限流功能，以避免对大语言模型 (LLM) 的高频调用。
-- **环境变量配置**: 通过 `.env` 文件或系统环境变量进行灵活配置。
+- **OpenAPI 到 MCP 工具转换**：自动解析 OpenAPI 规范，并根据定义创建相应的 MCP 工具。
+- **多种传输支持**：支持 `stdio`（标准输入/输出）、`sse`（服务器发送事件）和 `stream`（HTTP 流）作为 MCP 通信的传输协议。
+- **状态跟踪与认证**：支持基于 Cookie 的状态跟踪和 JWT (JSON Web Token) 处理。
+- **速率限制**：内置速率限制，以防止对大语言模型 (LLM) 的高频调用。
+- **环境变量配置**：通过 `.env` 文件或系统环境变量进行灵活配置。
 
-## 快速开始
+## 安装
 
-### 1. 配置环境变量
+您可以通过两种方式安装 `openapi-to-mcp`。
 
-创建 `.env` 文件或设置以下环境变量：
+### 方式一：使用 `go install` (推荐)
 
-```dotenv
-# MCP 传输方式：stdio, sse, stream (默认: stdio)
-MCP_TRANSPORT="stdio"
-# MCP BASE URL
-MCP_BASE_URL="http://localhost:8080"
+安装和运行该工具最简单的方法是使用 `go install`。安装后，`openapi-to-mcp` 命令将在您的 shell 中可用。
 
-# OpenAPI 规范文件路径（可以是本地文件路径或 URL）
-OPENAPI_SRC="./example/openapi.yaml"
-# # Base URL for API requests
-OPENAPI_BASE_URL=
-
-# 额外的 HTTP 头（JSON 格式），例如 '{"X-API-Key": "your-api-key"}'
-EXTRA_HEADERS='{"X-API-Key": "your-api-key"}'
-
-# 是否使用 Cookie (true/false, 默认: true)
-USE_COOKIE=true
-
-# 是否输出日志到标准输出 (true/false, 默认: false)
-LOG_OUTPUT=false
-
-# 速率限制：每秒允许的请求数 (默认: 1)
-RATE_LIMIT_PER_SECOND=1
-
-# 授权头，例如 "Basic xxxx"
-AUTHORIZATION_HEADERS="Basic xxxx"
+```bash
+go install github.com/constellation39/openapi-to-mcp@latest
 ```
 
-### 2. 运行项目
+### 方式二：从源码构建
+
+如果您想修改代码或参与贡献，可以克隆仓库并构建项目。
 
 ```bash
 git clone https://github.com/constellation39/openapi-to-mcp
 cd openapi-to-mcp
+go build .
+# 可执行文件将是 ./openapi-to-mcp
+```
+
+## 使用方法
+
+请按照以下步骤配置和运行该工具。
+
+### 步骤一：配置环境变量
+
+在项目的根目录中创建一个 `.env` 文件，或在您的系统中设置以下环境变量。您可以从复制示例文件开始：
+
+```bash
+# 在 Windows 上
 copy .env.example .env
 
-go run main.go
-#or
-go build .
+# 在 macOS/Linux 上
+cp .env.example .env
+```
+
+然后，编辑 `.env` 文件以进行您期望的配置：
+
+```dotenv
+# MCP 传输协议: stdio, sse, stream (默认为 stdio)
+MCP_TRANSPORT="stdio"
+# MCP 基础 URL (用于 sse 和 stream 模式)
+MCP_BASE_URL="http://localhost:8080"
+
+# OpenAPI 规范文件路径 (可以是本地文件路径或 URL)
+OPENAPI_SRC="./example/openapi.yaml"
+# API 请求的基础 URL
+OPENAPI_BASE_URL=
+
+# 额外的 HTTP 头 (JSON 格式), 例如：'{"X-API-Key": "your-api-key"}'
+EXTRA_HEADERS='{"X-API-Key": "your-api-key"}'
+
+# 是否使用 Cookie (true/false, 默认为 true)
+USE_COOKIE=true
+
+# 是否将日志输出到标准输出 (true/false, 默认为 false)
+LOG_OUTPUT=false
+
+# 速率限制: 每秒允许的请求数 (默认为 1)
+RATE_LIMIT_PER_SECOND=1
+
+# 授权头, 例如："Basic xxxx"
+AUTHORIZATION_HEADERS="Basic xxxx"
+```
+
+### 步骤二：运行应用程序
+
+从您的终端执行应用程序。
+
+如果您使用 `go install` 安装：
+```bash
+openapi-to-mcp
+```
+
+如果您从源码构建：
+```bash
 ./openapi-to-mcp
 ```
 
-### 3. 使用 MCP 客户端连接
+在开发过程中，您也可以直接使用 `go run` 运行：
+```bash
+go run main.go
+```
 
-根据您选择的 `MCP_TRANSPORT` 方式，使用相应的 MCP 客户端连接到 `openapi-to-mcp`。
+### 步骤三：连接 MCP 客户端
 
-**Stdio 模式 (默认)**:
+根据您选择的 `MCP_TRANSPORT`，配置您的 MCP 客户端以连接到 `openapi-to-mcp`。
 
-如果 `MCP_TRANSPORT` 设置为 `stdio`，您可以通过以下方式配置 MCP 客户端来运行 `openapi-to-mcp`：
+**- Stdio 模式 (默认)**:
+如果 `MCP_TRANSPORT` 是 `stdio`，请配置您的客户端直接执行命令。`env` 块可用于传递或覆盖环境变量。
 
 ```json
 {
     "mcpServers": {
         "openapi-to-mcp": {
-            "command": "go",
-            "args": [
-                "run",
-                "main.go"
-            ]
+            "command": "openapi-to-mcp",
+            "env": {
+                "MCP_BASE_URL": "http://localhost:8080",
+                "OPENAPI_SRC": "./example/openapi.yaml"
+            }
         }
     }
 }
 ```
+*注意：如果从源码运行，您可以将 "command" 设置为 "./openapi-to-mcp" 或使用 `go run main.go`。*
 
-或者，如果您已经构建了二进制文件，可以直接使用：
-
-```json
-{
-    "mcpServers": {
-        "openapi-to-mcp": {
-            "command": "./openapi-to-mcp" 
-        }
-    }
-}
-```
-
-**SSE 模式**:
-
-如果 `MCP_TRANSPORT` 设置为 `sse`，服务器将在 `BASE_URL` 上启动（例如 `http://localhost:8080`）。您可以通过以下方式配置 MCP 客户端连接到 SSE 端点：
+**- SSE 模式**:
+如果 `MCP_TRANSPORT` 是 `sse`，服务器将在 `MCP_BASE_URL` 上启动。请配置您的客户端连接到 `/sse` 端点。
 
 ```json
 {
@@ -108,9 +138,8 @@ go build .
 }
 ```
 
-**Stream 模式**:
-
-如果 `MCP_TRANSPORT` 设置为 `stream`，服务器将在 `BASE_URL` 上启动（例如 `http://localhost:8080`）。您可以通过以下方式配置 MCP 客户端连接到 Stream 端点：
+**- Stream 模式**:
+如果 `MCP_TRANSPORT` 是 `stream`，服务器将在 `MCP_BASE_URL` 上启动。请配置您的客户端连接到 `/stream` 端点。
 
 ```json
 {
@@ -121,8 +150,8 @@ go build .
     }
 }
 ```
+*请确保 http://localhost:8080 与您配置中的 MCP_BASE_URL 一致。*
 
-请注意，`http://localhost:8080` 应该替换为您实际配置的 `BASE_URL`。
 ## 项目结构
 
 ```
@@ -131,10 +160,10 @@ core/
   ├── openapi.go          # OpenAPI 规范解析和工具生成逻辑
   ├── session/            # 会话管理
   ├── middleware.go       # MCP 中间件定义
-  └── utils.go            # 常用工具函数
+  └── utils.go            # 通用工具函数
 example/
-  ├── openapi.yaml        # 示例 OpenAPI 规范文件
-main.go                   # 主应用程序入口
+  ├── openapi.yaml        # OpenAPI 规范示例文件
+main.go                   # 应用程序主入口点
 README.md
 README_zh.md
 go.mod
@@ -143,7 +172,7 @@ go.sum
 
 ## 贡献
 
-欢迎贡献！请随意提交 Pull Request 或报告 Issue。
+欢迎贡献！随时可以提交 Pull Request 或报告问题 (Issue)。
 
 ## 许可证
 
