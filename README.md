@@ -15,6 +15,7 @@ This project aims to provide a flexible framework that allows developers to auto
 - **State Tracking & Authentication**: Supports cookie-based state tracking and JWT (JSON Web Token) handling.
 - **Rate Limiting**: Built-in rate limiting to prevent high-frequency calls to the Large Language Model (LLM).
 - **Environment Variable Configuration**: Flexible configuration via `.env` file or system environment variables.
+- **Stricter MCPTool Definition**: Defines tools more rigorously for better usability by LLMs.
 
 ## Installation
 
